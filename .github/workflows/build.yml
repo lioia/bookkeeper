@@ -15,8 +15,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-      - name: Compile the image
-        run: mvn clean compile
       - name: Unit Tests
         run: mvn clean test
       - name: Integration Tests
