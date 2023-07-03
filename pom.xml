@@ -15,8 +15,9 @@
    limitations under the License.
 -->
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>org.apache</groupId>
         <artifactId>apache</artifactId>
@@ -115,7 +116,7 @@
         <redirectTestOutputToFile>true</redirectTestOutputToFile>
         <testRetryCount>2</testRetryCount>
         <src.dir>src/main/java</src.dir>
-        <test.additional.args/>
+        <test.additional.args />
 
         <!-- dependencies -->
         <arquillian-cube.version>1.18.2</arquillian-cube.version>
@@ -218,7 +219,8 @@
 
         <!-- JaCoCo integration -->
         <jacoco-maven-plugin.version>0.8.10</jacoco-maven-plugin.version>
-        <sonar.coverage.jacoco.xmlReportPaths>../jacoco-reports/target/site/jacoco-aggregate/jacoco.xml
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ../jacoco-reports/target/site/jacoco-aggregate/jacoco.xml
         </sonar.coverage.jacoco.xmlReportPaths>
         <!-- TODO: sonar integration -->
     </properties>
@@ -895,7 +897,8 @@
                     </dependencies>
                     <configuration>
                         <configLocation>buildtools/src/main/resources/bookkeeper/checkstyle.xml</configLocation>
-                        <suppressionsLocation>buildtools/src/main/resources/bookkeeper/suppressions.xml
+                        <suppressionsLocation>
+                            buildtools/src/main/resources/bookkeeper/suppressions.xml
                         </suppressionsLocation>
                         <encoding>UTF-8</encoding>
                         <consoleOutput>true</consoleOutput>
@@ -945,7 +948,8 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
                 <configuration>
-                    <!--                    <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid-->
+                    <!--                    <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true
+                    -Dio.netty.leakDetection.level=paranoid-->
                     <!--                        ${test.additional.args}-->
                     <!--                    </argLine>-->
                     <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
@@ -992,7 +996,8 @@
                         </group>
                         <group>
                             <title>Bookkeeper Stats Providers</title>
-                            <packages>org.apache.bookkeeper.stats.codahale:org.apache.bookkeeper.stats.prometheus
+                            <packages>
+                                org.apache.bookkeeper.stats.codahale:org.apache.bookkeeper.stats.prometheus
                             </packages>
                         </group>
                     </groups>
@@ -1000,9 +1005,11 @@
                     <overview>site/_site/overview/index.html</overview>
                     <show>package</show>
                     <detectJavaApiLink>false</detectJavaApiLink>
-                    <!-- The javadoc plugin only runs in the javadoc modules. But with the default configuration it tries
+                    <!-- The javadoc plugin only runs in the javadoc modules. But with the default
+                    configuration it tries
                          to run a new maven instance in every dependency, in order to generate the apidocs there as well.
-                         {@link https://maven.apache.org/plugins-archives/maven-javadoc-plugin-3.1.1/javadoc-mojo.html#detectOfflineLinks} -->
+                         {@link
+                    https://maven.apache.org/plugins-archives/maven-javadoc-plugin-3.1.1/javadoc-mojo.html#detectOfflineLinks} -->
                     <detectOfflineLinks>false</detectOfflineLinks>
                 </configuration>
                 <executions>
@@ -1201,10 +1208,11 @@
                                 </goals>
                                 <configuration>
                                     <sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
-                                    <outputDirectory>${project.build.directory}/generated-sources/delombok
+                                    <outputDirectory>
+                                        ${project.build.directory}/generated-sources/delombok
                                     </outputDirectory>
                                     <formatPreferences>
-                                        <pretty/>
+                                        <pretty />
                                     </formatPreferences>
                                 </configuration>
                             </execution>
@@ -1244,8 +1252,10 @@
                         <artifactId>maven-surefire-plugin</artifactId>
                         <version>${maven-surefire-plugin.version}</version>
                         <configuration>
-                            <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid
-                                -Dbookkeeper.log.root.level=INFO -Dbookkeeper.log.root.appender=CONSOLE
+                            <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true
+                                -Dio.netty.leakDetection.level=paranoid
+                                -Dbookkeeper.log.root.level=INFO
+                                -Dbookkeeper.log.root.appender=CONSOLE
                             </argLine>
                             <redirectTestOutputToFile>false</redirectTestOutputToFile>
                             <forkCount>${forkCount.variable}</forkCount>
