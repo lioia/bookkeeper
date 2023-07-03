@@ -32,9 +32,9 @@ jobs:
           git checkout tags/ba-dua-0.6.0 -b ba-dua-0.6.0
           mvn clean install
           cd ..
-      - name: Build and Generate JaCoCO Report
+      - name: Build and Generate ba-dua Report
         run: mvn clean verify -P ba-dua
-      - name: Upload JaCoCo Report
+      - name: Upload ba-dua Report
         uses: actions/upload-artifact@v3
         with:
           name: BaDuaReport
