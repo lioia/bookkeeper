@@ -944,15 +944,17 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>${maven-surefire-plugin.version}</version>
-                <!--        <configuration>-->
-                <!--          <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid ${test.additional.args}</argLine>-->
-                <!--          <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>-->
-                <!--          <forkCount>${forkCount.variable}</forkCount>-->
-                <!--          <reuseForks>false</reuseForks>-->
-                <!--          <trimStackTrace>false</trimStackTrace>-->
-                <!--          <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>-->
-                <!--          <rerunFailingTestsCount>${testRetryCount}</rerunFailingTestsCount>-->
-                <!--        </configuration>-->
+                <configuration>
+                    <!--                    <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid-->
+                    <!--                        ${test.additional.args}-->
+                    <!--                    </argLine>-->
+                    <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
+                    <forkCount>${forkCount.variable}</forkCount>
+                    <reuseForks>false</reuseForks>
+                    <trimStackTrace>false</trimStackTrace>
+                    <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
+                    <rerunFailingTestsCount>${testRetryCount}</rerunFailingTestsCount>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -1329,10 +1331,10 @@
 
         <!-- JaCoCo Profile -->
         <profile>
-            <id>coverage</id>
+            <id>jacoco</id>
             <activation>
                 <property>
-                    <name>!skipcoverage</name>
+                    <name>jacoco</name>
                 </property>
             </activation>
             <build>
@@ -1340,7 +1342,6 @@
                     <plugin>
                         <groupId>org.jacoco</groupId>
                         <artifactId>jacoco-maven-plugin</artifactId>
-                        <version>${jacoco-maven-plugin.version}</version>
                         <executions>
                             <execution>
                                 <id>prepare-agent</id>
