@@ -11,8 +11,7 @@ import org.junit.runners.Parameterized;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.*;
 
 import static org.mockito.Mockito.*;
 
@@ -162,6 +161,72 @@ public class EntryMemTableTest {
             private final long ledgerId;
 
             public TestParameters(ExpectedResult<EntryKeyValue> expected, long ledgerId) {
+                this.expected = expected;
+                this.ledgerId = ledgerId;
+            }
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class GetListOfEntriesOfLedgerTest {
+        private final ExpectedResult<List<Long>> expected;
+        private final long ledgerId;
+
+        private static EntryMemTable entryMemTable;
+        private static final EntryKeyValue firstLedgerEntry1 = new EntryKeyValue(-1, 0, Unpooled.buffer(1024).array());
+        private static final EntryKeyValue firstLedgerEntry2 = new EntryKeyValue(-1, 2, Unpooled.buffer(0).array());
+        private static final EntryKeyValue secondLedgerEntry1 = new EntryKeyValue(0, 0, Unpooled.buffer(0).array());
+        private static final EntryKeyValue secondLedgerEntry2 = new EntryKeyValue(0, 5, Unpooled.buffer(1024).array());
+
+        @Parameterized.Parameters
+        public static Collection<TestParameters> getParameters() {
+            return Arrays.asList(
+                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, 2L), null), -1),
+                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, 5L), null), 0),
+                    new TestParameters(new ExpectedResult<>(Collections.emptyList(), null), 1)
+            );
+        }
+
+        public GetListOfEntriesOfLedgerTest(TestParameters parameters) {
+            this.expected = parameters.expected;
+            this.ledgerId = parameters.ledgerId;
+        }
+
+        @BeforeClass
+        public static void setup() throws IOException {
+            CheckpointSource mockedCheckpointSource = mock(CheckpointSource.class);
+            entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), mockedCheckpointSource, NullStatsLogger.INSTANCE);
+            CacheCallback mockCallback = mock(CacheCallback.class);
+            entryMemTable.addEntry(firstLedgerEntry1.getLedgerId(), firstLedgerEntry1.getEntryId(), firstLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
+            entryMemTable.addEntry(firstLedgerEntry2.getLedgerId(), firstLedgerEntry2.getEntryId(), firstLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
+            entryMemTable.addEntry(secondLedgerEntry1.getLedgerId(), secondLedgerEntry1.getEntryId(), secondLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
+            entryMemTable.addEntry(secondLedgerEntry2.getLedgerId(), secondLedgerEntry2.getEntryId(), secondLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
+        }
+
+        @Test
+        public void getListOfEntriesOfLedger() {
+            PrimitiveIterator.OfLong result = entryMemTable.getListOfEntriesOfLedger(this.ledgerId);
+            List<Long> values = new ArrayList<>();
+            while (result.hasNext()) {
+                long value = result.next();
+                values.add(value);
+                if (!this.expected.getResult().contains(value))
+                    Assert.fail(String.format("Element %s was not expected", value));
+            }
+            Assert.assertArrayEquals(this.expected.getResult().toArray(), values.toArray());
+        }
+
+        @AfterClass
+        public static void teardown() throws Exception {
+            entryMemTable.close();
+        }
+
+        // Utility Class to have named and typed parameters for the considered test
+        private static class TestParameters {
+            private final ExpectedResult<List<Long>> expected;
+            private final long ledgerId;
+
+            public TestParameters(ExpectedResult<List<Long>> expected, long ledgerId) {
                 this.expected = expected;
                 this.ledgerId = ledgerId;
             }
