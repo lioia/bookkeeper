@@ -8,6 +8,7 @@ import org.apache.bookkeeper.conf.TestBKConfiguration;
 import org.apache.bookkeeper.stats.NullStatsLogger;
 import org.apache.bookkeeper.util.DiskChecker;
 import org.apache.bookkeeper.utils.ExpectedResult;
+import org.apache.bookkeeper.utils.Pair;
 import org.junit.*;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
@@ -237,7 +238,7 @@ public class EntryMemTableTest {
 
     @RunWith(Parameterized.class)
     public static class FlushTest {
-        private final ExpectedResult<Long> expected;
+        private final ExpectedResult<Pair<Long, Long>> expected;
         private final SkipListFlusher flusher;
         private final CheckpointSource.Checkpoint checkpoint;
 
@@ -262,11 +263,11 @@ public class EntryMemTableTest {
             CheckpointSource.Checkpoint mockCheckpoint = mock(CheckpointSource.Checkpoint.class);
 
             return Arrays.asList(
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), invalidFlusher, mockCheckpoint),
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), null, mockCheckpoint),
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), invalidFlusher, null),
-                    new TestParameters(new ExpectedResult<>(0L, null), mockFlusher, CheckpointSource.Checkpoint.MIN),
-                    new TestParameters(new ExpectedResult<>(2048L, null), validFlusher, CheckpointSource.Checkpoint.MAX)
+                    new TestParameters(new ExpectedResult<>(new Pair<>(null, null), Exception.class), invalidFlusher, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(new Pair<>(null, null), Exception.class), null, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(new Pair<>(null, null), Exception.class), invalidFlusher, null),
+                    new TestParameters(new ExpectedResult<>(new Pair<>(0L, 2048L), null), mockFlusher, CheckpointSource.Checkpoint.MIN),
+                    new TestParameters(new ExpectedResult<>(new Pair<>(2048L, 2048L), null), validFlusher, CheckpointSource.Checkpoint.MAX)
             );
         }
 
@@ -284,13 +285,24 @@ public class EntryMemTableTest {
             entryMemTable.addEntry(-1, 2, ByteBuffer.allocate(0), mockCallback);
             entryMemTable.addEntry(0, 0, ByteBuffer.allocate(0), mockCallback);
             entryMemTable.addEntry(0, 5, ByteBuffer.allocate(1024), mockCallback);
+            entryMemTable.snapshot();
         }
 
         @Test
         public void flush() {
             try {
                 Long result = entryMemTable.flush(flusher, checkpoint);
-                Assert.assertEquals(this.expected.getResult(), result);
+                Assert.assertEquals(this.expected.getResult().getFirst(), result);
+            } catch (Exception e) {
+                Assert.assertNotNull(this.expected.getException());
+            }
+        }
+
+        @Test
+        public void flushNoCheckpoint() {
+            try {
+                Long result = entryMemTable.flush(flusher);
+                Assert.assertEquals(this.expected.getResult().getSecond(), result);
             } catch (Exception e) {
                 Assert.assertNotNull(this.expected.getException());
             }
@@ -303,11 +315,14 @@ public class EntryMemTableTest {
 
         // Utility Class to have named and typed parameters for the considered test
         private static class TestParameters {
-            private final ExpectedResult<Long> expected;
+            // First Long is the expected result for flush
+            // Second Long is the expected result for flushNoCheckpoint
+            // This distinction is necessary because flush with one parameter, uses Checkpoint.MAX as the default
+            private final ExpectedResult<Pair<Long, Long>> expected;
             private final SkipListFlusher flusher;
             private final CheckpointSource.Checkpoint checkpoint;
 
-            public TestParameters(ExpectedResult<Long> expected, SkipListFlusher flusher, CheckpointSource.Checkpoint checkpoint) {
+            public TestParameters(ExpectedResult<Pair<Long, Long>> expected, SkipListFlusher flusher, CheckpointSource.Checkpoint checkpoint) {
                 this.expected = expected;
                 this.flusher = flusher;
                 this.checkpoint = checkpoint;
