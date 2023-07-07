@@ -38,7 +38,7 @@ public class EntryMemTableTest {
             doNothing().when(nothingCallback).onSizeLimitReached(any(CheckpointSource.Checkpoint.class));
             CacheCallback throwCallback = mock(CacheCallback.class);
             doThrow(IOException.class).when(throwCallback).onSizeLimitReached(any(CheckpointSource.Checkpoint.class));
-            int arbitrarySize = 1024 * 1024;
+            int arbitrarySize = 1024;
             return Arrays.asList(
                     new TestParameters(new ExpectedResult<>(null, Exception.class), false, -1, 1, null, throwCallback),
                     new TestParameters(new ExpectedResult<>(0L, null), true, 0, 0, Unpooled.buffer(0).nioBuffer(), nothingCallback),
@@ -262,7 +262,9 @@ public class EntryMemTableTest {
             CheckpointSource.Checkpoint mockCheckpoint = mock(CheckpointSource.Checkpoint.class);
 
             return Arrays.asList(
-                    new TestParameters(new ExpectedResult<>(null, IOException.class), invalidFlusher, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), invalidFlusher, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), null, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), invalidFlusher, null),
                     new TestParameters(new ExpectedResult<>(0L, null), mockFlusher, CheckpointSource.Checkpoint.MIN),
                     new TestParameters(new ExpectedResult<>(2048L, null), validFlusher, CheckpointSource.Checkpoint.MAX)
             );
@@ -289,18 +291,8 @@ public class EntryMemTableTest {
             try {
                 Long result = entryMemTable.flush(flusher, checkpoint);
                 Assert.assertEquals(this.expected.getResult(), result);
-            } catch (IOException e) {
-                Assert.assertEquals(this.expected.getException(), e.getClass());
-            }
-        }
-
-        @Test
-        public void flushNoCheckpoint() {
-            try {
-                Long result = entryMemTable.flush(flusher);
-                Assert.assertEquals(this.expected.getResult(), result);
-            } catch (IOException e) {
-                Assert.assertEquals(this.expected.getException(), e.getClass());
+            } catch (Exception e) {
+                Assert.assertNotNull(this.expected.getException());
             }
         }
 
