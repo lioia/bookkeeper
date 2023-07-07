@@ -1,8 +1,12 @@
 package org.apache.bookkeeper.bookie;
 
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.buffer.UnpooledByteBufAllocator;
+import org.apache.bookkeeper.conf.ServerConfiguration;
 import org.apache.bookkeeper.conf.TestBKConfiguration;
 import org.apache.bookkeeper.stats.NullStatsLogger;
+import org.apache.bookkeeper.util.DiskChecker;
 import org.apache.bookkeeper.utils.ExpectedResult;
 import org.junit.*;
 import org.junit.experimental.runners.Enclosed;
@@ -229,6 +233,94 @@ public class EntryMemTableTest {
             public TestParameters(ExpectedResult<List<Long>> expected, long ledgerId) {
                 this.expected = expected;
                 this.ledgerId = ledgerId;
+            }
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class FlushTest {
+        private final ExpectedResult<Long> expected;
+        private final SkipListFlusher flusher;
+        private final CheckpointSource.Checkpoint checkpoint;
+
+        private EntryMemTable entryMemTable;
+
+        @Parameterized.Parameters
+        public static Collection<TestParameters> getParameters() throws IOException {
+            ServerConfiguration conf = TestBKConfiguration.newServerConfiguration();
+
+            SkipListFlusher invalidFlusher = mock(SkipListFlusher.class);
+            doThrow(IOException.class).when(invalidFlusher).process(any(Long.class), any(Long.class), any(ByteBuf.class));
+            SkipListFlusher mockFlusher = mock(SkipListFlusher.class);
+
+            SortedLedgerStorage validFlusher = new SortedLedgerStorage();
+            LedgerDirsManager ledgerDirsManager = new LedgerDirsManager(conf, conf.getLedgerDirs(),
+                    new DiskChecker(conf.getDiskUsageThreshold(), conf.getDiskUsageWarnThreshold()));
+            validFlusher.initialize(
+                    conf, null, ledgerDirsManager, ledgerDirsManager,
+                    NullStatsLogger.INSTANCE, UnpooledByteBufAllocator.DEFAULT
+            );
+
+            CheckpointSource.Checkpoint mockCheckpoint = mock(CheckpointSource.Checkpoint.class);
+
+            return Arrays.asList(
+                    new TestParameters(new ExpectedResult<>(null, IOException.class), invalidFlusher, mockCheckpoint),
+                    new TestParameters(new ExpectedResult<>(0L, null), mockFlusher, CheckpointSource.Checkpoint.MIN),
+                    new TestParameters(new ExpectedResult<>(2048L, null), validFlusher, CheckpointSource.Checkpoint.MAX)
+            );
+        }
+
+        public FlushTest(TestParameters parameters) {
+            this.expected = parameters.expected;
+            this.flusher = parameters.flusher;
+            this.checkpoint = parameters.checkpoint;
+        }
+
+        @Before
+        public void setup() throws IOException {
+            entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), CheckpointSource.DEFAULT, NullStatsLogger.INSTANCE);
+            CacheCallback mockCallback = mock(CacheCallback.class);
+            entryMemTable.addEntry(-1, 0, ByteBuffer.allocate(1024), mockCallback);
+            entryMemTable.addEntry(-1, 2, ByteBuffer.allocate(0), mockCallback);
+            entryMemTable.addEntry(0, 0, ByteBuffer.allocate(0), mockCallback);
+            entryMemTable.addEntry(0, 5, ByteBuffer.allocate(1024), mockCallback);
+        }
+
+        @Test
+        public void flush() {
+            try {
+                Long result = entryMemTable.flush(flusher, checkpoint);
+                Assert.assertEquals(this.expected.getResult(), result);
+            } catch (IOException e) {
+                Assert.assertEquals(this.expected.getException(), e.getClass());
+            }
+        }
+
+        @Test
+        public void flushNoCheckpoint() {
+            try {
+                Long result = entryMemTable.flush(flusher);
+                Assert.assertEquals(this.expected.getResult(), result);
+            } catch (IOException e) {
+                Assert.assertEquals(this.expected.getException(), e.getClass());
+            }
+        }
+
+        @After
+        public void teardown() throws Exception {
+            entryMemTable.close();
+        }
+
+        // Utility Class to have named and typed parameters for the considered test
+        private static class TestParameters {
+            private final ExpectedResult<Long> expected;
+            private final SkipListFlusher flusher;
+            private final CheckpointSource.Checkpoint checkpoint;
+
+            public TestParameters(ExpectedResult<Long> expected, SkipListFlusher flusher, CheckpointSource.Checkpoint checkpoint) {
+                this.expected = expected;
+                this.flusher = flusher;
+                this.checkpoint = checkpoint;
             }
         }
     }
