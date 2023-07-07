@@ -21,7 +21,6 @@ import static org.mockito.Mockito.*;
 
 @RunWith(Enclosed.class)
 public class EntryMemTableTest {
-    // Testing addEntry and getEntry
     @RunWith(Parameterized.class)
     public static class AddGetEntryTest {
         private final ExpectedResult<Long> expected;
@@ -107,7 +106,6 @@ public class EntryMemTableTest {
         }
     }
 
-    // Testing getLastEntry
     @RunWith(Parameterized.class)
     public static class GetLastEntryTest {
         private final ExpectedResult<EntryKeyValue> expected;
