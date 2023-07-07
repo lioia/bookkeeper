@@ -20,6 +20,7 @@ import java.util.*;
 
 import static org.mockito.Mockito.*;
 
+// TODO(JaCoCo, ba-dua improvements)
 @RunWith(Enclosed.class)
 public class EntryMemTableTest {
     @RunWith(Parameterized.class)
