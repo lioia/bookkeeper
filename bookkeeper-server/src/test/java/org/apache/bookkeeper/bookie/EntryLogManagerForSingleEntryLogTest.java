@@ -2,14 +2,12 @@ package org.apache.bookkeeper.bookie;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.buffer.UnpooledByteBufAllocator;
 import org.apache.bookkeeper.conf.ServerConfiguration;
 import org.apache.bookkeeper.conf.TestBKConfiguration;
 import org.apache.bookkeeper.util.DiskChecker;
 import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.utils.ExpectedResult;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
@@ -18,8 +16,6 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.RandomAccessFile;
-import java.nio.channels.FileChannel;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Random;
@@ -36,23 +32,13 @@ public class EntryLogManagerForSingleEntryLogTest {
         ServerConfiguration conf = TestBKConfiguration.newServerConfiguration();
         LedgerDirsManager dirsMgr = new LedgerDirsManager(conf, new File[]{rootDir},
                 new DiskChecker(conf.getDiskUsageThreshold(), conf.getDiskUsageWarnThreshold()));
-        DefaultEntryLogger entryLogger = new DefaultEntryLogger(conf, dirsMgr);
-        entryLogManager = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
+        try (DefaultEntryLogger entryLogger = new DefaultEntryLogger(conf, dirsMgr)) {
+            entryLogManager = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
+        }
 
         // Creating ledgers with id 0 and 1
-        createLedger(0, conf);
-        createLedger(1, conf);
-    }
-
-    private static void createLedger(long ledgerId, ServerConfiguration conf) throws IOException {
-        File tmpFileLog0 = File.createTempFile("entrylog", String.valueOf(ledgerId));
-        tmpFileLog0.deleteOnExit();
-        FileChannel fc = new RandomAccessFile(tmpFileLog0, "rw").getChannel();
-        entryLogManager.setCurrentLogForLedgerAndAddToRotate(
-                ledgerId,
-                new DefaultEntryLogger.BufferedLogChannel(UnpooledByteBufAllocator.DEFAULT, fc,
-                        10, 10, 0, tmpFileLog0, conf.getFlushIntervalInBytes())
-        );
+        entryLogManager.createNewLog(0);
+        entryLogManager.createNewLog(1);
     }
 
     @RunWith(Parameterized.class)
