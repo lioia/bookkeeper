@@ -32,13 +32,9 @@ public class EntryLogManagerForSingleEntryLogTest {
         ServerConfiguration conf = TestBKConfiguration.newServerConfiguration();
         LedgerDirsManager dirsMgr = new LedgerDirsManager(conf, new File[]{rootDir},
                 new DiskChecker(conf.getDiskUsageThreshold(), conf.getDiskUsageWarnThreshold()));
-        try (DefaultEntryLogger entryLogger = new DefaultEntryLogger(conf, dirsMgr)) {
-            entryLogManager = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
-        }
-
-        // Creating ledgers with id 0 and 1
-        entryLogManager.createNewLog(0);
-        entryLogManager.createNewLog(1);
+        DefaultEntryLogger entryLogger = new DefaultEntryLogger(conf, dirsMgr);
+        entryLogManager = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
+        entryLogManager.createNewLog(0, "Testing ledger 0");
     }
 
     @RunWith(Parameterized.class)
@@ -59,11 +55,23 @@ public class EntryLogManagerForSingleEntryLogTest {
         public static Collection<TestParameters> getParameters() {
             byte[] b = new byte[1024];
             new Random().nextBytes(b);
-            ByteBuf entry = Unpooled.wrappedBuffer(b);
+
+            ByteBuf invalid = Unpooled.buffer(8 + 8 + 1024);
+            invalid.writeLong(-1);
+            invalid.writeLong(0);
+            invalid.writeBytes(b);
+
+            new Random().nextBytes(b);
+            ByteBuf valid = Unpooled.buffer(8 + 8 + 1024);
+            valid.writeLong(0);
+            valid.writeLong(1);
+            valid.writeBytes(b);
+
             return Arrays.asList(
                     new TestParameters(new ExpectedResult<>(null, Exception.class), -1, null, true),
-                    new TestParameters(new ExpectedResult<>(null, null), 0, Unpooled.buffer(0), false),
-                    new TestParameters(new ExpectedResult<>(null, null), 1, entry, true)
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), 0, Unpooled.buffer(0), false),
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), 0, invalid, true),
+                    new TestParameters(new ExpectedResult<>(null, null), 0, valid, true)
             );
         }
 
@@ -90,6 +98,42 @@ public class EntryLogManagerForSingleEntryLogTest {
                 this.ledger = ledger;
                 this.entry = entry;
                 this.rollLog = rollLog;
+            }
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class GetLogForLedgerTest {
+        private final ExpectedResult<Void> expected;
+        private final long ledgerId;
+
+        public GetLogForLedgerTest(TestParameters parameters) {
+            this.expected = parameters.expected;
+            this.ledgerId = parameters.ledgerId;
+        }
+
+        @Parameterized.Parameters
+        public static Collection<TestParameters> getParameters() {
+            return Arrays.asList(
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), -1),
+                    new TestParameters(new ExpectedResult<>(null, null), 0)
+            );
+        }
+
+        @Test
+        public void getCurrentLogForLedger() {
+            DefaultEntryLogger.BufferedLogChannel result = entryLogManager.getCurrentLogForLedger(ledgerId);
+            if (expected.getException() == null)
+                Assert.assertNotNull(result);
+        }
+
+        static class TestParameters {
+            private final ExpectedResult<Void> expected;
+            private final long ledgerId;
+
+            public TestParameters(ExpectedResult<Void> expected, long ledgerId) {
+                this.expected = expected;
+                this.ledgerId = ledgerId;
             }
         }
     }
