@@ -34,7 +34,7 @@ public class EntryLogManagerForSingleEntryLogTest {
                 new DiskChecker(conf.getDiskUsageThreshold(), conf.getDiskUsageWarnThreshold()));
         DefaultEntryLogger entryLogger = new DefaultEntryLogger(conf, dirsMgr);
         entryLogManager = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
-        entryLogManager.createNewLog(0, "Testing ledger 0");
+        entryLogManager.createNewLog(0);
     }
 
     @RunWith(Parameterized.class)
@@ -103,11 +103,11 @@ public class EntryLogManagerForSingleEntryLogTest {
     }
 
     @RunWith(Parameterized.class)
-    public static class GetLogForLedgerTest {
+    public static class LogManagementTest {
         private final ExpectedResult<Void> expected;
         private final long ledgerId;
 
-        public GetLogForLedgerTest(TestParameters parameters) {
+        public LogManagementTest(TestParameters parameters) {
             this.expected = parameters.expected;
             this.ledgerId = parameters.ledgerId;
         }
@@ -125,6 +125,21 @@ public class EntryLogManagerForSingleEntryLogTest {
             DefaultEntryLogger.BufferedLogChannel result = entryLogManager.getCurrentLogForLedger(ledgerId);
             if (expected.getException() == null)
                 Assert.assertNotNull(result);
+        }
+
+        @Test
+        public void logCreation() {
+            try {
+                DefaultEntryLogger.BufferedLogChannel logCompaction = entryLogManager.createNewLogForCompaction();
+                entryLogManager.setCurrentLogForLedgerAndAddToRotate(ledgerId, logCompaction);
+                DefaultEntryLogger.BufferedLogChannel logForLedger = entryLogManager.getCurrentLogForLedger(ledgerId);
+                long logId = entryLogManager.getCurrentLogId();
+                DefaultEntryLogger.BufferedLogChannel logIfPresent = entryLogManager.getCurrentLogIfPresent(logId);
+                Assert.assertEquals(logCompaction, logForLedger);
+                Assert.assertEquals(logCompaction, logIfPresent);
+            } catch (Exception e) {
+                Assert.assertNotNull(expected.getException());
+            }
         }
 
         static class TestParameters {
