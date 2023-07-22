@@ -106,17 +106,22 @@ public class EntryLogManagerForSingleEntryLogTest {
     public static class LogManagementTest {
         private final ExpectedResult<Void> expected;
         private final long ledgerId;
+        private final int entrySize;
+        private final boolean rollLog;
 
         public LogManagementTest(TestParameters parameters) {
             this.expected = parameters.expected;
             this.ledgerId = parameters.ledgerId;
+            this.entrySize = parameters.entrySize;
+            this.rollLog = parameters.rollLog;
         }
 
         @Parameterized.Parameters
         public static Collection<TestParameters> getParameters() {
             return Arrays.asList(
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), -1),
-                    new TestParameters(new ExpectedResult<>(null, null), 0)
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), -1, -1, false),
+                    new TestParameters(new ExpectedResult<>(null, null), 0, 0, true),
+                    new TestParameters(new ExpectedResult<>(null, null), 0, 1, true)
             );
         }
 
@@ -133,10 +138,12 @@ public class EntryLogManagerForSingleEntryLogTest {
                 DefaultEntryLogger.BufferedLogChannel logCompaction = entryLogManager.createNewLogForCompaction();
                 entryLogManager.setCurrentLogForLedgerAndAddToRotate(ledgerId, logCompaction);
                 DefaultEntryLogger.BufferedLogChannel logForLedger = entryLogManager.getCurrentLogForLedger(ledgerId);
+                DefaultEntryLogger.BufferedLogChannel logForLedgerForAddEntry = entryLogManager.getCurrentLogForLedgerForAddEntry(ledgerId, entrySize, rollLog);
                 long logId = entryLogManager.getCurrentLogId();
                 DefaultEntryLogger.BufferedLogChannel logIfPresent = entryLogManager.getCurrentLogIfPresent(logId);
                 Assert.assertEquals(logCompaction, logForLedger);
                 Assert.assertEquals(logCompaction, logIfPresent);
+                Assert.assertEquals(logCompaction, logForLedgerForAddEntry);
             } catch (Exception e) {
                 Assert.assertNotNull(expected.getException());
             }
@@ -145,10 +152,14 @@ public class EntryLogManagerForSingleEntryLogTest {
         static class TestParameters {
             private final ExpectedResult<Void> expected;
             private final long ledgerId;
+            private final int entrySize;
+            private final boolean rollLog;
 
-            public TestParameters(ExpectedResult<Void> expected, long ledgerId) {
+            public TestParameters(ExpectedResult<Void> expected, long ledgerId, int entrySize, boolean rollLog) {
                 this.expected = expected;
                 this.ledgerId = ledgerId;
+                this.entrySize = entrySize;
+                this.rollLog = rollLog;
             }
         }
     }
