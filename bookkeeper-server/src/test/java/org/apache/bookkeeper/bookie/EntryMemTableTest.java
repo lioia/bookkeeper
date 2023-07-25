@@ -20,7 +20,6 @@ import java.util.*;
 
 import static org.mockito.Mockito.*;
 
-// TODO(JaCoCo, ba-dua improvements)
 @RunWith(Enclosed.class)
 public class EntryMemTableTest {
     @RunWith(Parameterized.class)
@@ -40,12 +39,14 @@ public class EntryMemTableTest {
             doNothing().when(nothingCallback).onSizeLimitReached(any(CheckpointSource.Checkpoint.class));
             CacheCallback throwCallback = mock(CacheCallback.class);
             doThrow(IOException.class).when(throwCallback).onSizeLimitReached(any(CheckpointSource.Checkpoint.class));
-            int arbitrarySize = 1024;
+            long skipListSizeLimit = TestBKConfiguration.newServerConfiguration().getSkipListSizeLimit();
             return Arrays.asList(
                     new TestParameters(new ExpectedResult<>(null, Exception.class), false, -1, 1, null, throwCallback),
                     new TestParameters(new ExpectedResult<>(0L, null), true, 0, 0, Unpooled.buffer(0).nioBuffer(), nothingCallback),
-                    new TestParameters(new ExpectedResult<>((long) arbitrarySize, null), false, 1, -1, ByteBuffer.allocate(arbitrarySize), nothingCallback),
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), false, 1, -1, Unpooled.buffer(0).nioBuffer(), null)
+                    new TestParameters(new ExpectedResult<>(skipListSizeLimit, null), false, 1, -1, ByteBuffer.allocate((int)skipListSizeLimit), nothingCallback),
+// Test ignored because it reaches maven surefire plugin timeout limit (it cannot acquire the lock for writing the new entry)
+//                    new TestParameters(new ExpectedResult<>(null, Exception.class), true, 1, -1, ByteBuffer.allocate((int)(skipListSizeLimit + 1)), nothingCallback),
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), true, 1,  1, ByteBuffer.allocate((int)(skipListSizeLimit + 1)), null)
             );
         }
 
@@ -60,8 +61,7 @@ public class EntryMemTableTest {
 
         @BeforeClass
         public static void setup() {
-            CheckpointSource mockedCheckpointSource = mock(CheckpointSource.class);
-            entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), mockedCheckpointSource, NullStatsLogger.INSTANCE);
+            entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), CheckpointSource.DEFAULT, NullStatsLogger.INSTANCE);
         }
 
         @AfterClass
@@ -81,7 +81,6 @@ public class EntryMemTableTest {
                 Assert.assertEquals(this.ledgerId, entryKeyValue.getLedgerId());
                 Assert.assertEquals(this.entryId, entryKeyValue.getEntryId());
                 Assert.assertArrayEquals(this.entry.array(), entryKeyValue.getValueAsByteBuffer().array());
-//                Assert.assertEquals(this.entry, entryKeyValue.getValueAsByteBuffer().nioBuffer());
             } catch (Exception e) {
                 Assert.assertNotNull(this.expected.getException());
             }
