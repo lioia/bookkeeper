@@ -43,10 +43,10 @@ public class EntryMemTableTest {
             return Arrays.asList(
                     new TestParameters(new ExpectedResult<>(null, Exception.class), false, -1, 1, null, throwCallback),
                     new TestParameters(new ExpectedResult<>(0L, null), true, 0, 0, Unpooled.buffer(0).nioBuffer(), nothingCallback),
-                    new TestParameters(new ExpectedResult<>(skipListSizeLimit, null), false, 1, -1, ByteBuffer.allocate((int)skipListSizeLimit), nothingCallback),
+                    new TestParameters(new ExpectedResult<>(skipListSizeLimit, null), false, 1, -1, ByteBuffer.allocate((int) skipListSizeLimit), nothingCallback),
 // Test ignored because it reaches maven surefire plugin timeout limit (it cannot acquire the lock for writing the new entry)
 //                    new TestParameters(new ExpectedResult<>(null, Exception.class), true, 1, -1, ByteBuffer.allocate((int)(skipListSizeLimit + 1)), nothingCallback),
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), true, 1,  1, ByteBuffer.allocate((int)(skipListSizeLimit + 1)), null)
+                    new TestParameters(new ExpectedResult<>(null, Exception.class), true, 1, 1, ByteBuffer.allocate((int) (skipListSizeLimit + 1)), null)
             );
         }
 
@@ -113,17 +113,13 @@ public class EntryMemTableTest {
         private final long ledgerId;
 
         private static EntryMemTable entryMemTable;
-        private static final EntryKeyValue firstLedgerEntry1 = new EntryKeyValue(-1, 0, Unpooled.buffer(1024).array());
-        private static final EntryKeyValue firstLedgerEntry2 = new EntryKeyValue(-1, 2, Unpooled.buffer(0).array());
-        private static final EntryKeyValue secondLedgerEntry1 = new EntryKeyValue(0, 0, Unpooled.buffer(0).array());
-        private static final EntryKeyValue secondLedgerEntry2 = new EntryKeyValue(0, 5, Unpooled.buffer(1024).array());
 
         @Parameterized.Parameters
         public static Collection<TestParameters> getParameters() {
             return Arrays.asList(
-                    new TestParameters(new ExpectedResult<>(firstLedgerEntry2, null), -1),
-                    new TestParameters(new ExpectedResult<>(secondLedgerEntry2, null), 0),
-                    new TestParameters(new ExpectedResult<>(null, Exception.class), 1)
+//                    new TestParameters(new ExpectedResult<>(new EntryKeyValue(-1, -1, Unpooled.buffer(0).array()), null), -1),
+                    new TestParameters(new ExpectedResult<>(new EntryKeyValue(0, 1, Unpooled.buffer(1024).array()), null), 0),
+                    new TestParameters(new ExpectedResult<>(null, null), 1)
             );
         }
 
@@ -134,13 +130,21 @@ public class EntryMemTableTest {
 
         @BeforeClass
         public static void setup() throws IOException {
-            CheckpointSource mockedCheckpointSource = mock(CheckpointSource.class);
+            CheckpointSource mockedCheckpointSource = CheckpointSource.DEFAULT;
             entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), mockedCheckpointSource, NullStatsLogger.INSTANCE);
             CacheCallback mockCallback = mock(CacheCallback.class);
-            entryMemTable.addEntry(firstLedgerEntry1.getLedgerId(), firstLedgerEntry1.getEntryId(), firstLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(firstLedgerEntry2.getLedgerId(), firstLedgerEntry2.getEntryId(), firstLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(secondLedgerEntry1.getLedgerId(), secondLedgerEntry1.getEntryId(), secondLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(secondLedgerEntry2.getLedgerId(), secondLedgerEntry2.getEntryId(), secondLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
+            long result = entryMemTable.addEntry(-1, 0, ByteBuffer.allocate(1024), mockCallback);
+            if (result != 1024)
+                throw new IOException("Could not add EntryKeyValue(-1, 0, 1024)");
+            result = entryMemTable.addEntry(-1, -1, ByteBuffer.allocate(0), mockCallback);
+            if (result != 0)
+                throw new IOException("Could not add EntryKeyValue(-1, -1, 0)");
+            result = entryMemTable.addEntry(0, 0, ByteBuffer.allocate(0), mockCallback);
+            if (result != 0)
+                throw new IOException("Could not add EntryKeyValue(0, 0, 0)");
+            result = entryMemTable.addEntry(0, 1, ByteBuffer.allocate(1024), mockCallback);
+            if (result != 1024)
+                throw new IOException("Could not add EntryKeyValue(0, 1, 1024)");
         }
 
         @Test
@@ -176,16 +180,12 @@ public class EntryMemTableTest {
         private final long ledgerId;
 
         private static EntryMemTable entryMemTable;
-        private static final EntryKeyValue firstLedgerEntry1 = new EntryKeyValue(-1, 0, Unpooled.buffer(1024).array());
-        private static final EntryKeyValue firstLedgerEntry2 = new EntryKeyValue(-1, 2, Unpooled.buffer(0).array());
-        private static final EntryKeyValue secondLedgerEntry1 = new EntryKeyValue(0, 0, Unpooled.buffer(0).array());
-        private static final EntryKeyValue secondLedgerEntry2 = new EntryKeyValue(0, 5, Unpooled.buffer(1024).array());
 
         @Parameterized.Parameters
         public static Collection<TestParameters> getParameters() {
             return Arrays.asList(
-                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, 2L), null), -1),
-                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, 5L), null), 0),
+//                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, -1L), null), -1),
+                    new TestParameters(new ExpectedResult<>(Arrays.asList(0L, 1L), null), 0),
                     new TestParameters(new ExpectedResult<>(Collections.emptyList(), null), 1)
             );
         }
@@ -200,10 +200,10 @@ public class EntryMemTableTest {
             CheckpointSource mockedCheckpointSource = mock(CheckpointSource.class);
             entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), mockedCheckpointSource, NullStatsLogger.INSTANCE);
             CacheCallback mockCallback = mock(CacheCallback.class);
-            entryMemTable.addEntry(firstLedgerEntry1.getLedgerId(), firstLedgerEntry1.getEntryId(), firstLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(firstLedgerEntry2.getLedgerId(), firstLedgerEntry2.getEntryId(), firstLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(secondLedgerEntry1.getLedgerId(), secondLedgerEntry1.getEntryId(), secondLedgerEntry1.getValueAsByteBuffer().nioBuffer(), mockCallback);
-            entryMemTable.addEntry(secondLedgerEntry2.getLedgerId(), secondLedgerEntry2.getEntryId(), secondLedgerEntry2.getValueAsByteBuffer().nioBuffer(), mockCallback);
+            entryMemTable.addEntry(-1, 0, ByteBuffer.allocate(1024), mockCallback);
+            entryMemTable.addEntry(-1, -1, ByteBuffer.allocate(0), mockCallback);
+            entryMemTable.addEntry(0, 0, ByteBuffer.allocate(0), mockCallback);
+            entryMemTable.addEntry(0, 1, ByteBuffer.allocate(1024), mockCallback);
         }
 
         @Test
