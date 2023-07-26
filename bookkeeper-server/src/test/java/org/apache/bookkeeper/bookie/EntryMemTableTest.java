@@ -282,9 +282,9 @@ public class EntryMemTableTest {
             entryMemTable = new EntryMemTable(TestBKConfiguration.newServerConfiguration(), CheckpointSource.DEFAULT, NullStatsLogger.INSTANCE);
             CacheCallback mockCallback = mock(CacheCallback.class);
             entryMemTable.addEntry(-1, 0, ByteBuffer.allocate(1024), mockCallback);
-            entryMemTable.addEntry(-1, 2, ByteBuffer.allocate(0), mockCallback);
+            entryMemTable.addEntry(-1, -1, ByteBuffer.allocate(0), mockCallback);
             entryMemTable.addEntry(0, 0, ByteBuffer.allocate(0), mockCallback);
-            entryMemTable.addEntry(0, 5, ByteBuffer.allocate(1024), mockCallback);
+            entryMemTable.addEntry(0, 1, ByteBuffer.allocate(1024), mockCallback);
             entryMemTable.snapshot();
         }
 
