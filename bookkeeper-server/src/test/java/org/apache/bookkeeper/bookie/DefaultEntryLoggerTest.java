@@ -248,8 +248,8 @@ public class DefaultEntryLoggerTest {
             this.scanner = parameters.scanner;
         }
 
-        @BeforeClass
-        public static void setup() throws IOException {
+        @Before
+        public void setup() throws IOException {
             loggerSetup();
             entryLogger.addEntry(0, createEntry(0, 0, 300));
             entryLogger.addEntry(0, createEntry(0, 1, 300));
@@ -257,8 +257,8 @@ public class DefaultEntryLoggerTest {
             entryLogger.addEntry(1, createEntry(1, 1, 1024));
         }
 
-        @AfterClass
-        public static void teardown() throws Exception {
+        @After
+        public void teardown() throws Exception {
             loggerTeardown();
         }
 
@@ -277,6 +277,28 @@ public class DefaultEntryLoggerTest {
         public void scanEntryTest() {
             try {
                 entryLogger.scanEntryLog(logId, scanner);
+                EntryLogScannerImpl scannerImpl = (EntryLogScannerImpl) scanner;
+                Assert.assertArrayEquals(this.expected.getResult().toArray(), scannerImpl.entries().toArray());
+            } catch (Exception e) {
+                Assert.assertNotNull(this.expected.getException());
+            }
+        }
+
+        @Test
+        public void randomDataScanEntryTest() {
+            try {
+                Path curDir = rootDir.toPath().resolve("current");
+                for (File file : Objects.requireNonNull(curDir.toFile().listFiles())) {
+                    // Write random data to log files
+                    if (file.getName().contains("log")) {
+                        int size = (int) Files.size(file.toPath());
+                        byte[] bytes = new byte[size];
+                        new Random().nextBytes(bytes);
+                        Files.delete(file.toPath());
+                        Files.write(file.toPath(), bytes);
+                    }
+                }
+                entryLogger.scanEntryLog(logId, new EntryLogScannerImpl());
                 EntryLogScannerImpl scannerImpl = (EntryLogScannerImpl) scanner;
                 Assert.assertArrayEquals(this.expected.getResult().toArray(), scannerImpl.entries().toArray());
             } catch (Exception e) {
