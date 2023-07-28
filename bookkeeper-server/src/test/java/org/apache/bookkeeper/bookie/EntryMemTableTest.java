@@ -87,7 +87,7 @@ public class EntryMemTableTest {
         }
 
         // Utility Class to have named and typed parameters for the considered test
-        private static class TestParameters {
+        public static class TestParameters {
             private final ExpectedResult<Long> expected;
             private final boolean expectedIsEmpty;
             private final long ledgerId;
@@ -163,7 +163,7 @@ public class EntryMemTableTest {
         }
 
         // Utility Class to have named and typed parameters for the considered test
-        private static class TestParameters {
+        public static class TestParameters {
             private final ExpectedResult<EntryKeyValue> expected;
             private final long ledgerId;
 
@@ -225,7 +225,7 @@ public class EntryMemTableTest {
         }
 
         // Utility Class to have named and typed parameters for the considered test
-        private static class TestParameters {
+        public static class TestParameters {
             private final ExpectedResult<List<Long>> expected;
             private final long ledgerId;
 
@@ -314,7 +314,7 @@ public class EntryMemTableTest {
         }
 
         // Utility Class to have named and typed parameters for the considered test
-        private static class TestParameters {
+        public static class TestParameters {
             // First Long is the expected result for flush
             // Second Long is the expected result for flushNoCheckpoint
             // This distinction is necessary because flush with one parameter, uses Checkpoint.MAX as the default
