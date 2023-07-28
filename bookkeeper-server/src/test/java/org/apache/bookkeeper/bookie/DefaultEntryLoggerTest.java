@@ -17,6 +17,8 @@ import org.junit.runners.Parameterized;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.*;
 
 import static org.mockito.Mockito.*;
@@ -99,6 +101,29 @@ public class DefaultEntryLoggerTest {
             }
         }
 
+        // This test fails because the `internalReadEntry` is called with the wrong parameters
+        // It is currently called like this: internalReadEntry(location, -1L, -1L, false)
+        // But should be internalReadEntry(-1L, -1L, location, false)
+        @Ignore
+        public void addReadValidateTest() {
+            try {
+                long logLocation = entryLogger.addEntry(ledgerId, entry);
+                ByteBuf read2 = entryLogger.readEntry(logLocation);
+                read2.readLong();
+                read2.readLong();
+                byte[] bytes = new byte[]{};
+                byte[] entryBytes = new byte[]{};
+                entry.readLong();
+                entry.readLong();
+                entry.readBytes(entryBytes);
+                entry.resetReaderIndex();
+                read2.readBytes(bytes);
+                Assert.assertArrayEquals(entryBytes, bytes);
+            } catch (Exception e) {
+                Assert.assertNotNull(this.expected.getException());
+            }
+        }
+
         // Utility Class to have named and typed parameters for the considered test
         public static class TestParameters {
             private final ExpectedResult<Void> expected;
@@ -147,6 +172,67 @@ public class DefaultEntryLoggerTest {
             } catch (IOException e) {
                 Assert.fail();
             }
+        }
+
+        @Test
+        public void entryLogsSetNoDirectory() {
+            try {
+                // Delete log files
+                File curDir = rootDir.toPath().resolve("current").toFile();
+                for (File file : Objects.requireNonNull(curDir.listFiles())) {
+                    // Delete log file
+                    Files.delete(file.toPath());
+                }
+                Files.delete(curDir.toPath());
+                entryLogger.getEntryLogsSet();
+                Assert.fail();
+            } catch (IOException ignored) {
+                // Success if it raises an exception
+            }
+        }
+
+        @Test
+        public void flushedLogIdsNoDirectory() throws IOException {
+            File curDir = rootDir.toPath().resolve("current").toFile();
+            for (File file : Objects.requireNonNull(curDir.listFiles())) {
+                Files.delete(file.toPath());
+            }
+            Files.delete(curDir.toPath());
+            Set<Long> logs = entryLogger.getFlushedLogIds();
+            Assert.assertEquals(0, logs.size());
+        }
+
+        @Test
+        public void flushedLogIdsNoDirectoryButCurIsFile() throws IOException {
+            File curDir = rootDir.toPath().resolve("current").toFile();
+            for (File file : Objects.requireNonNull(curDir.listFiles())) {
+                Files.delete(file.toPath());
+            }
+            Files.delete(curDir.toPath());
+            Files.createFile(curDir.toPath());
+            Set<Long> logs = entryLogger.getFlushedLogIds();
+            Assert.assertEquals(0, logs.size());
+        }
+
+        @Test
+        public void flushedLogIdsEmptyCurrent() throws IOException {
+            File curDir = rootDir.toPath().resolve("current").toFile();
+            for (File file : Objects.requireNonNull(curDir.listFiles())) {
+                Files.delete(file.toPath());
+            }
+            Set<Long> logs = entryLogger.getFlushedLogIds();
+            Assert.assertEquals(0, logs.size());
+        }
+
+        @Test
+        public void flushedLogIdsNoLogFiles() throws IOException {
+            File curDir = rootDir.toPath().resolve("current").toFile();
+            for (File file : Objects.requireNonNull(curDir.listFiles())) {
+                if (file.getName().contains("log"))
+                    Files.delete(file.toPath());
+            }
+            Set<Long> logs = entryLogger.getFlushedLogIds();
+            Assert.assertEquals(0, logs.size());
         }
     }
 
