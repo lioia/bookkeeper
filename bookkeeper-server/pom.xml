@@ -468,6 +468,7 @@
                             <targetClasses>
                                 <param>org.apache.bookkeeper.bookie.DefaultEntryLogger</param>
                                 <param>org.apache.bookkeeper.bookie.EntryMemTable</param>
+                                <param>org.apache.bookkeeper.bookie.EntryLogManagerBase</param>
                             </targetClasses>
                             <targetTests>
                                 <param>org.apache.bookkeeper.bookie.DefaultEntryLoggerTest</param>
