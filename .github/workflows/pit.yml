@@ -1,0 +1,35 @@
+name: BookKeeper PIT
+run-name: ${{ github.actor }} Tests
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    name: Build and analyze
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+      - name: Set up JDK 1.8
+        uses: actions/setup-java@v3
+        with:
+          java-version: 8
+          distribution: 'temurin' # Alternative distribution options are available.
+      - name: Cache Maven packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.m2
+          key: ${{ runner.os }}-m2-${{ hashFiles('**/pom.xml') }}
+          restore-keys: ${{ runner.os }}-m2
+      - name: Build and Generate PIT Report
+        run: mvn clean verify -P pit
+      - name: Upload PIT Report
+        uses: actions/upload-artifact@v3
+        with:
+          name: PITReport
+          path: bookkeeper-server/target/pit-reports/
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
