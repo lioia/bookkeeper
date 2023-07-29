@@ -375,7 +375,8 @@
             </activation>
             <properties>
                 <ba-dua.version>0.6.0</ba-dua.version>
-                <argLine>-javaagent:target/dependency/ba-dua-agent-rt-${ba-dua.version}-all.jar -Doutput.file=${project.build.directory}/badua.ser
+                <argLine>-javaagent:target/dependency/ba-dua-agent-rt-${ba-dua.version}-all.jar
+                    -Doutput.file=${project.build.directory}/badua.ser
                 </argLine>
             </properties>
             <dependencies>
@@ -432,6 +433,54 @@
                                         <argument>${project.build.directory}/badua.xml</argument>
                                     </arguments>
                                 </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>pit</id>
+            <activation>
+                <property>
+                    <name>pit</name>
+                </property>
+            </activation>
+            <properties>
+                <pitest.version>1.10.3</pitest.version>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>org.pitest</groupId>
+                    <artifactId>pitest-maven</artifactId>
+                    <version>${pitest.version}</version>
+                    <type>maven-plugin</type>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>${pitest.version}</version>
+                        <configuration>
+                            <targetClasses>
+                                <param>org.apache.bookkeeper.bookie.DefaultEntryLogger</param>
+                                <param>org.apache.bookkeeper.bookie.EntryMemTable</param>
+                            </targetClasses>
+                            <targetTests>
+                                <param>org.apache.bookkeeper.bookie.DefaultEntryLoggerTest</param>
+                                <param>org.apache.bookkeeper.bookie.EntryMemTableTest</param>
+                            </targetTests>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>PIT</id>
+                                <phase>test-compile</phase>
+                                <goals>
+                                    <goal>mutationCoverage</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>
