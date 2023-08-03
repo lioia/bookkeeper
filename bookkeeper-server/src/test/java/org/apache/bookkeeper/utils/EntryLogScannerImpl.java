@@ -1,7 +1,6 @@
 package org.apache.bookkeeper.utils;
 
 import io.netty.buffer.ByteBuf;
-import lombok.Getter;
 import org.apache.bookkeeper.bookie.EntryKey;
 import org.apache.bookkeeper.bookie.storage.EntryLogScanner;
 
