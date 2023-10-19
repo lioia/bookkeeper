@@ -135,9 +135,6 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Test
         public void newEnsemble() {
             try {
-                if (ensembleSize == 2 && excludeBookies.size() == 1) {
-                    int i = 0;
-                }
                 PlacementResult<List<BookieId>> result =
                         policy.newEnsemble(ensembleSize, writeQuorumSize, ackQuorumSize, customMetadata, excludeBookies);
                 Assert.assertEquals(expected.getT().getAdheringToPolicy(), result.getAdheringToPolicy());
