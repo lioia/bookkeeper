@@ -205,9 +205,8 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Test
         public void onClusterChangedTest() {
             try {
+                // TODO: better test check
                 Set<BookieId> result = policy.onClusterChanged(writableBookies, readOnlyBookies);
-//                Assert.assertNotNull(expected.getT());
-//                Assert.assertTrue(expected.getT().containsAll(result));
                 Assert.assertNull(expected.getException());
             } catch (Exception e) {
                 Assert.assertNotNull(expected.getException());
