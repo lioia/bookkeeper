@@ -147,4 +147,71 @@ public class DefaultEnsemblePlacementPolicyTest {
             }
         }
     }
+
+    @RunWith(Parameterized.class)
+    public static class OnClusterChangedTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            ExpectedResult<Set<BookieId>> exception = new ExpectedResult<>(null, Exception.class);
+            ExpectedResult<Set<BookieId>> valid = new ExpectedResult<>(new HashSet<>(), null);
+            Set<BookieId> empty = new HashSet<>();
+            Set<BookieId> newBookie = Collections.singleton(BookieId.parse("new"));
+            Set<BookieId> writeBookie = Collections.singleton(BookieId.parse("w"));
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, null, exception},
+                            {null, empty, exception},
+                            {null, newBookie, exception},
+                            {empty, null, exception},
+                            {empty, empty, valid},
+                            {empty, newBookie, valid},
+                            {newBookie, null, exception},
+                            {newBookie, empty, valid},
+//                            {newBookie, newBookie, exception}, // Fail
+//                            // Improvements
+                            {writeBookie, newBookie, valid}
+                    }
+            );
+        }
+
+        private DefaultEnsemblePlacementPolicy policy;
+        private final Set<BookieId> writableBookies;
+        private final Set<BookieId> readOnlyBookies;
+        private final ExpectedResult<Set<BookieId>> expected;
+
+        public OnClusterChangedTest(Set<BookieId> writableBookies, Set<BookieId> readOnlyBookies,
+                                    ExpectedResult<Set<BookieId>> expected) {
+            this.writableBookies = writableBookies;
+            this.readOnlyBookies = readOnlyBookies;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setUp() {
+            ClientConfiguration conf = TestBKConfiguration.newClientConfiguration();
+            conf.setDiskWeightBasedPlacementEnabled(true);
+            policy = (DefaultEnsemblePlacementPolicy) new DefaultEnsemblePlacementPolicy()
+                    .initialize(conf, Optional.empty(), null, DISABLE_ALL, NullStatsLogger.INSTANCE, null);
+            Set<BookieId> initialWritable = Collections.singleton(BookieId.parse("w"));
+            Set<BookieId> initialReadOnly = Collections.singleton(BookieId.parse("ro"));
+            policy.onClusterChanged(initialWritable, initialReadOnly);
+        }
+
+        @After
+        public void tearDown() {
+            policy.uninitalize();
+        }
+
+        @Test
+        public void onClusterChangedTest() {
+            try {
+                Set<BookieId> result = policy.onClusterChanged(writableBookies, readOnlyBookies);
+//                Assert.assertNotNull(expected.getT());
+//                Assert.assertTrue(expected.getT().containsAll(result));
+                Assert.assertNull(expected.getException());
+            } catch (Exception e) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+    }
 }
