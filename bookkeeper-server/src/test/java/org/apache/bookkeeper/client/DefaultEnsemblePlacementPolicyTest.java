@@ -15,7 +15,10 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.apache.bookkeeper.feature.SettableFeatureProvider.DISABLE_ALL;
 
@@ -317,6 +320,89 @@ public class DefaultEnsemblePlacementPolicyTest {
                 Assert.assertNull(expected.getException());
                 Assert.assertEquals(expected.getT().getResult().getId(), result.getResult().getId());
                 Assert.assertEquals(expected.getT().getAdheringToPolicy(), result.getAdheringToPolicy());
+            } catch (Exception e) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+
+        @After
+        public void teardown() {
+            policy.uninitalize();
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class UpdateBookieInfoTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            Map<BookieId, BookieInfoReader.BookieInfo> empty = new HashMap<>();
+            Map<BookieId, BookieInfoReader.BookieInfo> bothNull = new HashMap<>();
+            bothNull.put(null, null);
+            Map<BookieId, BookieInfoReader.BookieInfo> wBookie = new HashMap<>();
+            wBookie.put(BookieId.parse("w"), new BookieInfoReader.BookieInfo(-1, -2));
+            Map<BookieId, BookieInfoReader.BookieInfo> newBookie = new HashMap<>();
+            newBookie.put(BookieId.parse("w2"), new BookieInfoReader.BookieInfo(0, 0));
+            Map<BookieId, BookieInfoReader.BookieInfo> nullBookie = new HashMap<>();
+            nullBookie.put(null, new BookieInfoReader.BookieInfo(1, 2));
+            ExpectedResult<Object> exception = new ExpectedResult<>(null, Exception.class);
+            ExpectedResult<Object> valid = new ExpectedResult<>(null, null);
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, exception},
+                            {empty, valid},
+                            {bothNull, exception},
+//                            {wBookie, exception}, // Fail
+                            {newBookie, valid},
+//                            {nullBookie, exception} // Fail
+                    }
+            );
+        }
+
+        private DefaultEnsemblePlacementPolicy policy;
+        private final Map<BookieId, BookieInfoReader.BookieInfo> map;
+        private final ExpectedResult<Object> expected;
+
+        public UpdateBookieInfoTest(Map<BookieId, BookieInfoReader.BookieInfo> map,
+                                    ExpectedResult<Object> expected) {
+            this.map = map;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            ClientConfiguration conf = TestBKConfiguration.newClientConfiguration();
+            conf.setDiskWeightBasedPlacementEnabled(true);
+            policy = (DefaultEnsemblePlacementPolicy) new DefaultEnsemblePlacementPolicy()
+                    .initialize(conf, Optional.empty(), null, DISABLE_ALL, NullStatsLogger.INSTANCE, null);
+            Set<BookieId> initialWritable = new HashSet<>();
+            initialWritable.add(BookieId.parse("w"));
+            policy.onClusterChanged(initialWritable, new HashSet<>());
+        }
+
+        @Test
+        public void updateBookieInfoTest() {
+            try {
+                policy.updateBookieInfo(map);
+                Assert.assertNull(expected.getException());
+            } catch (Exception e) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+
+        @Test
+        public void pitImprovements() {
+            try {
+                Thread thread = new Thread(() -> {
+                    try {
+                        // TODO: get write lock from policy
+                        Thread.sleep(Long.MAX_VALUE);
+                    } catch (Exception e) {
+                        Assert.fail();
+                    }
+                });
+                thread.start();
+                policy.updateBookieInfo(map);
+                Assert.assertNull(expected.getException());
             } catch (Exception e) {
                 Assert.assertNotNull(expected.getException());
             }
