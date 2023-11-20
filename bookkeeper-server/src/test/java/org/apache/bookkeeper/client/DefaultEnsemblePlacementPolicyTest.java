@@ -15,10 +15,7 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.apache.bookkeeper.feature.SettableFeatureProvider.DISABLE_ALL;
 
@@ -394,14 +391,15 @@ public class DefaultEnsemblePlacementPolicyTest {
             try {
                 Thread thread = new Thread(() -> {
                     try {
-                        // TODO: get write lock from policy
-                        Thread.sleep(Long.MAX_VALUE);
+                        policy.updateBookieInfo(map);
+                        Thread.sleep(100);
                     } catch (Exception e) {
-                        Assert.fail();
+                        Assert.assertNotNull(expected.getException());
                     }
                 });
                 thread.start();
                 policy.updateBookieInfo(map);
+                thread.join();
                 Assert.assertNull(expected.getException());
             } catch (Exception e) {
                 Assert.assertNotNull(expected.getException());
