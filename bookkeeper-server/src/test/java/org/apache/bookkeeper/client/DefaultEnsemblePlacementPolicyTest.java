@@ -153,7 +153,9 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Parameterized.Parameters
         public static Collection<Object[]> getParameters() {
             ExpectedResult<Set<BookieId>> exception = new ExpectedResult<>(null, Exception.class);
-            ExpectedResult<Set<BookieId>> valid = new ExpectedResult<>(new HashSet<>(), null);
+            Set<BookieId> validSet = Collections.singleton(BookieId.parse("w"));
+            ExpectedResult<Set<BookieId>> valid = new ExpectedResult<>(validSet, null);
+            ExpectedResult<Set<BookieId>> emptyValid = new ExpectedResult<>(new HashSet<>(), null);
             Set<BookieId> empty = new HashSet<>();
             Set<BookieId> newBookie = Collections.singleton(BookieId.parse("new"));
             Set<BookieId> writeBookie = Collections.singleton(BookieId.parse("w"));
@@ -169,7 +171,7 @@ public class DefaultEnsemblePlacementPolicyTest {
                             {newBookie, empty, valid},
 //                            {newBookie, newBookie, exception}, // Fail
 //                            // Improvements
-                            {writeBookie, newBookie, valid}
+                            {writeBookie, newBookie, emptyValid},
                     }
             );
         }
@@ -205,9 +207,11 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Test
         public void onClusterChangedTest() {
             try {
-                // TODO: better test check
                 Set<BookieId> result = policy.onClusterChanged(writableBookies, readOnlyBookies);
-                Assert.assertNull(expected.getException());
+                // List equals ignoring order
+                Assert.assertEquals(expected.getT().size(), result.size());
+                Assert.assertTrue(expected.getT().containsAll(result));
+                Assert.assertTrue(result.containsAll(expected.getT()));
             } catch (Exception e) {
                 Assert.assertNotNull(expected.getException());
             }
