@@ -15,7 +15,9 @@ import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.lang.reflect.Field;
 import java.util.*;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.apache.bookkeeper.feature.SettableFeatureProvider.DISABLE_ALL;
 
@@ -135,8 +137,22 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Test
         public void newEnsemble() {
             try {
+                Thread thread = new Thread(() -> {
+                    // PIT Improvements
+                    try {
+                        Field rwLockField = DefaultEnsemblePlacementPolicy.class.getDeclaredField("rwLock");
+                        rwLockField.setAccessible(true);
+                        ReentrantReadWriteLock rwLock = (ReentrantReadWriteLock) rwLockField.get(policy);
+                        rwLock.writeLock().lock();
+                        Thread.sleep(100);
+                    } catch (Exception e) {
+                        Assert.assertNotNull(expected.getException());
+                    }
+                });
+                thread.start();
                 PlacementResult<List<BookieId>> result =
                         policy.newEnsemble(ensembleSize, writeQuorumSize, ackQuorumSize, customMetadata, excludeBookies);
+                thread.join();
                 Assert.assertEquals(expected.getT().getAdheringToPolicy(), result.getAdheringToPolicy());
                 // List equals ignoring order
                 Assert.assertEquals(expected.getT().getResult().size(), result.getResult().size());
