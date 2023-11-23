@@ -399,17 +399,8 @@ public class DefaultEnsemblePlacementPolicyTest {
         @Test
         public void updateBookieInfoTest() {
             try {
-                policy.updateBookieInfo(map);
-                Assert.assertNull(expected.getException());
-            } catch (Exception e) {
-                Assert.assertNotNull(expected.getException());
-            }
-        }
-
-        @Test
-        public void pitImprovements() {
-            try {
                 Thread thread = new Thread(() -> {
+                    // PIT Improvements
                     try {
                         policy.updateBookieInfo(map);
                         Thread.sleep(100);
