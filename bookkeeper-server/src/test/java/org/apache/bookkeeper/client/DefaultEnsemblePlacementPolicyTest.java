@@ -7,10 +7,7 @@ import org.apache.bookkeeper.conf.TestBKConfiguration;
 import org.apache.bookkeeper.net.BookieId;
 import org.apache.bookkeeper.stats.NullStatsLogger;
 import org.apache.bookkeeper.utils.ExpectedResult;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -20,6 +17,7 @@ import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import static org.apache.bookkeeper.feature.SettableFeatureProvider.DISABLE_ALL;
+import static org.mockito.Mockito.*;
 
 @RunWith(Enclosed.class)
 public class DefaultEnsemblePlacementPolicyTest {
@@ -229,6 +227,42 @@ public class DefaultEnsemblePlacementPolicyTest {
                 Assert.assertTrue(expected.getT().containsAll(result));
                 Assert.assertTrue(result.containsAll(expected.getT()));
             } catch (Exception e) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+
+        @Test
+        public void pitImprovements() {
+            try {
+                // Valid test cases
+                if (writableBookies != null && readOnlyBookies != null && expected.getException() == null) {
+                    List<BookieId> selectedBookies = new ArrayList<>();
+                    WeightedRandomSelection<BookieId> mockSelection = mock(WeightedRandomSelection.class);
+                    doAnswer(invocationOnMock -> {
+                        Map<BookieId, WeightedRandomSelection.WeightedObject> arg = invocationOnMock.getArgument(0);
+                        selectedBookies.addAll(arg.keySet());
+                        return null;
+                    }).when(mockSelection).updateMap(anyMap());
+                    // Set WeightedSelection to mock implementation, using reflection
+                    Field weightedSelectionField = DefaultEnsemblePlacementPolicy.class.getDeclaredField("weightedSelection");
+                    weightedSelectionField.setAccessible(true);
+                    weightedSelectionField.set(policy, mockSelection);
+                    Set<BookieId> result = policy.onClusterChanged(writableBookies, readOnlyBookies);
+                    // List equals ignoring order
+                    Assert.assertEquals(expected.getT().size(), result.size());
+                    Assert.assertTrue(expected.getT().containsAll(result));
+                    Assert.assertTrue(result.containsAll(expected.getT()));
+                    // Assert map updated correctly
+                    if (writableBookies.size() == 0 || writableBookies.contains(BookieId.parse("w"))) {
+                        Assert.assertEquals(selectedBookies.size(), 0);
+                    } else if (writableBookies.contains(BookieId.parse("new"))) {
+                        Assert.assertEquals(selectedBookies.size(), 1);
+                        Assert.assertTrue(selectedBookies.contains(BookieId.parse("new")));
+                    } else {
+                        Assert.fail();
+                    }
+                }
+            } catch (Exception ignored) {
                 Assert.assertNotNull(expected.getException());
             }
         }
