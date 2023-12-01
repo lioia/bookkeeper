@@ -489,13 +489,10 @@
                         <version>${pitest.version}</version>
                         <configuration>
                             <targetClasses>
-                                <param>org.apache.bookkeeper.bookie.DefaultEntryLogger</param>
-                                <param>org.apache.bookkeeper.bookie.EntryMemTable</param>
-                                <param>org.apache.bookkeeper.bookie.EntryLogManagerBase</param>
+                                <param>org.apache.bookkeeper.client.DefaultBookieAddressResolver</param>
                             </targetClasses>
                             <targetTests>
-                                <param>org.apache.bookkeeper.bookie.DefaultEntryLoggerTest</param>
-                                <param>org.apache.bookkeeper.bookie.EntryMemTableTest</param>
+                                <param>org.apache.bookkeeper.client.DefaultBookieAddressResolverTest</param>
                             </targetTests>
                         </configuration>
                         <executions>
