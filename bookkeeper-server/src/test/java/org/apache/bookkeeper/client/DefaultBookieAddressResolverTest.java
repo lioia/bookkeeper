@@ -82,7 +82,6 @@ public class DefaultBookieAddressResolverTest {
                 .thenAnswer(invocationOnMock -> {
                     throw new BKException.BKBookieHandleNotAvailableException();
                 });
-//        when(mockClient.getBookieServiceInfo(any())).thenThrow();
         when(mockClient.toString()).thenReturn("MockRegistrationClient");
         resolver = new DefaultBookieAddressResolver(mockClient);
     }
