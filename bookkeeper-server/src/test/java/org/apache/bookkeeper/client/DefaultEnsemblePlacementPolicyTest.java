@@ -143,6 +143,7 @@ public class DefaultEnsemblePlacementPolicyTest {
                         ReentrantReadWriteLock rwLock = (ReentrantReadWriteLock) rwLockField.get(policy);
                         rwLock.writeLock().lock();
                         Thread.sleep(100);
+                        rwLock.writeLock().unlock();
                     } catch (Exception e) {
                         Assert.assertNotNull(expected.getException());
                     }
