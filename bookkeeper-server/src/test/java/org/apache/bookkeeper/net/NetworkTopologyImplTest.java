@@ -135,4 +135,61 @@ public class NetworkTopologyImplTest {
             }
         }
     }
+
+    @RunWith(Parameterized.class)
+    public static class ContainsTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            String rackScope = "/rack-0";
+            Node rack0 = new NetworkTopologyImpl.InnerNode("/rack-0");
+            Node node2 = new BookieNode(BookieId.parse("node2"), rackScope);
+            node2.setLevel(1);
+            node2.setParent(rack0);
+            Node subRack = new NetworkTopologyImpl.InnerNode("/sub-rack-1");
+            subRack.setLevel(1);
+            subRack.setParent(rack0);
+            Node deepNode = new NodeBase("/rack-0/sub-rack-1/deepNode");
+            deepNode.setLevel(2);
+            deepNode.setParent(subRack);
+            Node noParentNode = new NodeBase("/no-parent");
+            noParentNode.setLevel(0);
+            Node noLevelNode = new NodeBase("/fake-parent");
+            noLevelNode.setParent(new NetworkTopologyImpl.InnerNode("/fake-parent"));
+            ExpectedResult<Boolean> falseExp = new ExpectedResult<>(false, null);
+            ExpectedResult<Boolean> trueExp = new ExpectedResult<>(true, null);
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, falseExp},
+                            {initialNode, trueExp},
+                            {node2, falseExp},
+                            // Improvements
+                            {deepNode, falseExp},
+                            {noParentNode, falseExp},
+                            {noLevelNode, falseExp},
+                    }
+            );
+        }
+
+        private NetworkTopologyImpl topology;
+        private final Node node;
+        private final ExpectedResult<Boolean> expected;
+        private static final Node initialNode = new BookieNode(BookieId.parse("node1"), "/rack-0");
+
+        public ContainsTest(Node node, ExpectedResult<Boolean> expected) {
+            this.node = node;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode);
+        }
+
+        @Test
+        public void containsTest() {
+            boolean result = topology.contains(node);
+            Assert.assertEquals(expected.getT(), result);
+        }
+    }
 }
