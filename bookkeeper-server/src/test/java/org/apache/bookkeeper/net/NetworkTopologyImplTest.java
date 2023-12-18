@@ -237,6 +237,10 @@ public class NetworkTopologyImplTest {
         public static Collection<Object[]> getParameters() {
             initialNode = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
             Node notPresent = new NodeBase("/not-present");
+            Node innerNode = new NetworkTopologyImpl.InnerNode("/rack-0");
+            Node notPresetButInRack = new BookieNode(BookieId.parse("not-present"), "/rack-0");
+            Node rack = new NodeBase("/rack-0");
+            rack.setNetworkLocation("/");
             ExpectedResult<Void> valid = new ExpectedResult<>(null, null);
             ExpectedResult<Void> exception = new ExpectedResult<>(null, Exception.class);
             return Arrays.asList(
@@ -244,6 +248,10 @@ public class NetworkTopologyImplTest {
                             {null, valid},
                             {notPresent, exception},
                             {initialNode, valid},
+                            // Improvements
+                            {innerNode, exception},
+                            {notPresetButInRack, valid},
+                            {rack, valid},
                     }
             );
         }
