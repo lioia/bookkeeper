@@ -137,7 +137,7 @@ public class NetworkTopologyImplTest {
     }
 
     @RunWith(Parameterized.class)
-    public static class ContainsTest {
+    public static class ContainsParametricTest {
         @Parameterized.Parameters
         public static Collection<Object[]> getParameters() {
             String rackScope = "/rack-0";
@@ -175,7 +175,7 @@ public class NetworkTopologyImplTest {
         private final ExpectedResult<Boolean> expected;
         private static final Node initialNode = new BookieNode(BookieId.parse("node1"), "/rack-0");
 
-        public ContainsTest(Node node, ExpectedResult<Boolean> expected) {
+        public ContainsParametricTest(Node node, ExpectedResult<Boolean> expected) {
             this.node = node;
             this.expected = expected;
         }
@@ -190,6 +190,25 @@ public class NetworkTopologyImplTest {
         public void containsTest() {
             boolean result = topology.contains(node);
             Assert.assertEquals(expected.getT(), result);
+        }
+    }
+
+    public static class ContainsNonParametricTest {
+        private NetworkTopologyImpl topology;
+        private Node node;
+        @Before
+        public void setup() {
+            node = new NodeBase("/node-1");
+            node.setParent(new NetworkTopologyImpl.InnerNode("/"));
+            node.setNetworkLocation("/");
+            topology = new NetworkTopologyImpl();
+            topology.add(node);
+        }
+
+        @Test
+        public void containsTest() {
+            boolean result = topology.contains(node);
+            Assert.assertTrue(result);
         }
     }
 }
