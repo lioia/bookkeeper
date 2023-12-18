@@ -1,5 +1,6 @@
 package org.apache.bookkeeper.net;
 
+import com.codahale.metrics.MetricRegistryListener;
 import com.google.common.graph.Network;
 import org.apache.bookkeeper.utils.ExpectedResult;
 import org.junit.Assert;
@@ -193,7 +194,7 @@ public class NetworkTopologyImplTest {
         public void containsTest() throws InterruptedException {
             Thread thread = new Thread(() -> {
                 try {
-                    Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock") ;
+                    Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
                     lockField.setAccessible(true);
                     ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
                     lock.writeLock().lock();
@@ -213,6 +214,7 @@ public class NetworkTopologyImplTest {
     public static class ContainsNonParametricTest {
         private NetworkTopologyImpl topology;
         private Node node;
+
         @Before
         public void setup() {
             node = new NodeBase("/node-1");
@@ -226,6 +228,51 @@ public class NetworkTopologyImplTest {
         public void containsTest() {
             boolean result = topology.contains(node);
             Assert.assertTrue(result);
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class RemoveParametricTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            initialNode = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
+            Node notPresent = new NodeBase("/not-present");
+            ExpectedResult<Void> valid = new ExpectedResult<>(null, null);
+            ExpectedResult<Void> exception = new ExpectedResult<>(null, Exception.class);
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, valid},
+                            {notPresent, exception},
+                            {initialNode, valid},
+                    }
+            );
+        }
+
+        private NetworkTopologyImpl topology;
+        private static Node initialNode;
+        private final Node node;
+        private final ExpectedResult<Void> expected;
+
+        public RemoveParametricTest(Node node, ExpectedResult<Void> expected) {
+            this.node = node;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode);
+        }
+
+        @Test
+        public void remove() {
+            try {
+                topology.remove(node);
+                Assert.assertNull(expected.getException());
+                Assert.assertFalse(topology.contains(node));
+            } catch (Exception ignored) {
+                Assert.assertNotNull(expected);
+            }
         }
     }
 }
