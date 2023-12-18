@@ -1,5 +1,6 @@
 package org.apache.bookkeeper.net;
 
+import com.google.common.graph.Network;
 import org.apache.bookkeeper.utils.ExpectedResult;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,6 +12,8 @@ import org.junit.runners.Parameterized;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @RunWith(Enclosed.class)
 public class NetworkTopologyImplTest {
@@ -187,8 +190,22 @@ public class NetworkTopologyImplTest {
         }
 
         @Test
-        public void containsTest() {
+        public void containsTest() throws InterruptedException {
+            Thread thread = new Thread(() -> {
+                try {
+                    Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock") ;
+                    lockField.setAccessible(true);
+                    ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
+                    lock.writeLock().lock();
+                    Thread.sleep(100);
+                    lock.writeLock().unlock();
+                } catch (Exception ignored) {
+                    Assert.fail();
+                }
+            });
+            thread.start();
             boolean result = topology.contains(node);
+            thread.join();
             Assert.assertEquals(expected.getT(), result);
         }
     }
