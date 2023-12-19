@@ -345,6 +345,8 @@ public class NetworkTopologyImplTest {
                             {"/rack-0", validInitial},
                             // Improvements
                             {"~", empty},
+                            // PIT improvements
+                            {"~/rack-1", validInitial},
                     }
             );
         }
@@ -368,7 +370,22 @@ public class NetworkTopologyImplTest {
         @Test
         public void getLeavesTest() {
             try {
+                // PIT improvements
+                Thread thread = new Thread(() -> {
+                    try {
+                        Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
+                        lockField.setAccessible(true);
+                        ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
+                        lock.writeLock().lock();
+                        Thread.sleep(100);
+                        lock.writeLock().unlock();
+                    } catch (Exception ignored) {
+                        Assert.assertNotNull(expected.getException());
+                    }
+                });
+                thread.start();
                 Set<Node> result = topology.getLeaves(scope);
+                thread.join();
                 // Collection equals, ignoring order
                 Assert.assertEquals(expected.getT().size(), result.size());
                 Assert.assertTrue(expected.getT().containsAll(result));
