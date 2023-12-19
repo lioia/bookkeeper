@@ -395,4 +395,53 @@ public class NetworkTopologyImplTest {
             }
         }
     }
+
+    @RunWith(Parameterized.class)
+    public static class CountNumOfAvailableNodesParametricTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            Collection<Node> excludeEmpty = Collections.emptyList();
+            Collection<Node> excludePresent = Collections.singletonList(initialNode);
+            Collection<Node> excludeNotPresent = Collections.singletonList(new NodeBase("/node-1"));
+            ExpectedResult<Integer> zero = new ExpectedResult<>(0, null);
+            ExpectedResult<Integer> one = new ExpectedResult<>(1, null);
+            ExpectedResult<Integer> exception = new ExpectedResult<>(null, Exception.class);
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, excludeEmpty, exception},
+                            {"/rack-1", excludePresent, zero},
+                            {"/rack-0", excludeNotPresent, one},
+                            
+                    }
+            );
+        }
+
+        private static final Node initialNode = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
+        private NetworkTopologyImpl topology;
+        private final String scope;
+        private final Collection<Node> excludeNodes;
+        private final ExpectedResult<Integer> expected;
+
+        public CountNumOfAvailableNodesParametricTest(String scope, Collection<Node> excludeNodes, ExpectedResult<Integer> expected) {
+            this.scope = scope;
+            this.excludeNodes = excludeNodes;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode);
+        }
+
+        @Test
+        public void countTest() {
+            try {
+                Integer result = topology.countNumOfAvailableNodes(scope, excludeNodes);
+                Assert.assertEquals(expected.getT(), result);
+            } catch (Exception ignored) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+    }
 }
