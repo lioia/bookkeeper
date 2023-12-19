@@ -411,7 +411,8 @@ public class NetworkTopologyImplTest {
                             {null, excludeEmpty, exception},
                             {"/rack-1", excludePresent, zero},
                             {"/rack-0", excludeNotPresent, one},
-                            
+                            // Improvements
+                            {"~", excludeEmpty, zero},
                     }
             );
         }
@@ -442,6 +443,23 @@ public class NetworkTopologyImplTest {
             } catch (Exception ignored) {
                 Assert.assertNotNull(expected.getException());
             }
+        }
+    }
+
+    public static class CountNumOfAvailableNodesNonParametricTest {
+        private NetworkTopologyImpl topology;
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(new BookieNode(BookieId.parse("initial-node-1"), "/rack-0/sub-rack-1"));
+            topology.add(new BookieNode(BookieId.parse("initial-node-2"), "/rack-0/sub-rack-1"));
+        }
+
+        @Test
+        public void countTest() {
+            Collection<Node> exclude = Collections.singletonList(new NodeBase("/rack-0/sub-rack-1/initial-node-1"));
+            Assert.assertEquals(1, topology.countNumOfAvailableNodes("/rack-0/sub-rack-1", exclude));
         }
     }
 }
