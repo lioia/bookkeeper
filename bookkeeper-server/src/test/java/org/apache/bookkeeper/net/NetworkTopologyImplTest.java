@@ -413,6 +413,8 @@ public class NetworkTopologyImplTest {
                             {"/rack-0", excludeNotPresent, one},
                             // Improvements
                             {"~", excludeEmpty, zero},
+                            // ba-dua improvements
+                            {"~/rack-0/initial-node", excludeEmpty, one}
                     }
             );
         }
@@ -460,6 +462,16 @@ public class NetworkTopologyImplTest {
         public void countTest() {
             Collection<Node> exclude = Collections.singletonList(new NodeBase("/rack-0/sub-rack-1/initial-node-1"));
             Assert.assertEquals(1, topology.countNumOfAvailableNodes("/rack-0/sub-rack-1", exclude));
+        }
+
+        // ba-dua improvements
+        @Test
+        public void countInverseTest() {
+            Collection<Node> exclude = Arrays.asList(
+                    new NodeBase("/rack-0/sub-rack-1/initial-node-2"),
+                    new NodeBase("/rack-0/sub-rack-1/initial-node-1")
+            );
+            Assert.assertEquals(0, topology.countNumOfAvailableNodes("~", exclude));
         }
     }
 }
