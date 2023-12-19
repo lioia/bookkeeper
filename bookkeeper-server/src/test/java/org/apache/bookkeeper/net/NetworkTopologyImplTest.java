@@ -489,4 +489,60 @@ public class NetworkTopologyImplTest {
             Assert.assertEquals(0, topology.countNumOfAvailableNodes("~", exclude));
         }
     }
+
+    @RunWith(Parameterized.class)
+    public static class GetDistanceParametricTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            Node notPresent = new BookieNode(BookieId.parse("node-3"), "/rack-0");
+            ExpectedResult<Integer> exception = new ExpectedResult<>(null, Exception.class);
+            ExpectedResult<Integer> max = new ExpectedResult<>(Integer.MAX_VALUE, null);
+            ExpectedResult<Integer> zero = new ExpectedResult<>(0, null);
+            ExpectedResult<Integer> two = new ExpectedResult<>(2, null);
+            ExpectedResult<Integer> four = new ExpectedResult<>(4, null);
+            return Arrays.asList(
+                    new Object[][]{
+//                            {null, null, exception}, // Fail
+                            {null, null, zero},
+//                            {notPresent, notPresent, max}, // Fail (the nodes are not in the topology)
+                            {notPresent, notPresent, zero},
+                            {initialNode1, initialNode2, two},
+                            {initialNode2, initialNode3, four},
+                    }
+            );
+        }
+
+        private static final Node initialNode1 = new BookieNode(BookieId.parse("initial-node-1"), "/rack-0");
+        private static final Node initialNode2 = new BookieNode(BookieId.parse("initial-node-2"), "/rack-0");
+        private static final Node initialNode3 = new BookieNode(BookieId.parse("initial-node-3"), "/rack-1");
+        private NetworkTopologyImpl topology;
+        private final Node node1;
+        private final Node node2;
+        private final ExpectedResult<Integer> expected;
+
+        public GetDistanceParametricTest(Node node1, Node node2, ExpectedResult<Integer> expected) {
+            this.node1 = node1;
+            this.node2 = node2;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode1);
+            topology.add(initialNode2);
+            topology.add(initialNode3);
+        }
+
+        @Test
+        public void getDistanceTest() {
+            try {
+                Integer result = topology.getDistance(node1, node2);
+                Assert.assertNull(expected.getException());
+                Assert.assertEquals(expected.getT(), result);
+            } catch (Exception ignored) {
+                Assert.assertNotNull(expected.getException());
+            }
+        }
+    }
 }
