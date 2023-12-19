@@ -300,7 +300,7 @@ public class NetworkTopologyImplTest {
                 topology.remove(initialNode);
                 Assert.assertFalse(topology.contains(initialNode));
                 // PIT improvements
-                Assert.assertEquals(0, topology.numOfRacks);
+                Assert.assertEquals(0, topology.getNumOfRacks());
             } catch (Exception ignored) {
                 Assert.fail();
             }
