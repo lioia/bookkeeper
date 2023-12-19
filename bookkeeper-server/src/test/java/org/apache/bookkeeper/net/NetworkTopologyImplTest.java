@@ -335,14 +335,16 @@ public class NetworkTopologyImplTest {
     public static class GetLeavesParametricTest {
         @Parameterized.Parameters
         public static Collection<Object[]> getParameters() {
-            ExpectedResult<Set<Node>> validInitial = new ExpectedResult<Set<Node>>(Collections.singleton(initialNode), null);
-            ExpectedResult<Set<Node>> empty = new ExpectedResult<Set<Node>>(Collections.emptySet(), null);
-            ExpectedResult<Set<Node>> exception = new ExpectedResult<Set<Node>>(null, Exception.class);
+            ExpectedResult<Set<Node>> validInitial = new ExpectedResult<>(Collections.singleton(initialNode), null);
+            ExpectedResult<Set<Node>> empty = new ExpectedResult<>(Collections.emptySet(), null);
+            ExpectedResult<Set<Node>> exception = new ExpectedResult<>(null, Exception.class);
             return Arrays.asList(
                     new Object[][]{
                             {null, exception},
                             {"/rack-1", empty},
-                            {"/rack-0", validInitial}
+                            {"/rack-0", validInitial},
+                            // Improvements
+                            {"~", empty},
                     }
             );
         }
