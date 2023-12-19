@@ -440,7 +440,22 @@ public class NetworkTopologyImplTest {
         @Test
         public void countTest() {
             try {
+                Thread thread = new Thread(() -> {
+                    Field lockField = null;
+                    try {
+                        lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
+                        lockField.setAccessible(true);
+                        ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
+                        lock.writeLock().lock();
+                        Thread.sleep(100);
+                        lock.writeLock().unlock();
+                    } catch (Exception ignored) {
+                        Assert.assertNotNull(expected.getException());
+                    }
+                });
+                thread.start();
                 Integer result = topology.countNumOfAvailableNodes(scope, excludeNodes);
+                thread.join();
                 Assert.assertEquals(expected.getT(), result);
             } catch (Exception ignored) {
                 Assert.assertNotNull(expected.getException());
