@@ -1,7 +1,5 @@
 package org.apache.bookkeeper.net;
 
-import com.codahale.metrics.MetricRegistryListener;
-import com.google.common.graph.Network;
 import org.apache.bookkeeper.utils.ExpectedResult;
 import org.junit.Assert;
 import org.junit.Before;
@@ -13,8 +11,9 @@ import org.junit.runners.Parameterized;
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @RunWith(Enclosed.class)
 public class NetworkTopologyImplTest {
@@ -53,7 +52,7 @@ public class NetworkTopologyImplTest {
         @Before
         public void setup() {
             topology = new NetworkTopologyImpl();
-            Node node1 = new BookieNode(BookieId.parse("node1"), "/rack-0");
+            Node node1 = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
             topology.add(node1);
         }
 
@@ -288,6 +287,7 @@ public class NetworkTopologyImplTest {
     public static class RemoveNonParametricTest {
         private NetworkTopologyImpl topology;
         private static final Node initialNode = new BookieNode(BookieId.parse("node1"), "/rack-0");
+
         @Before
         public void setup() {
             topology = new NetworkTopologyImpl();
@@ -327,6 +327,52 @@ public class NetworkTopologyImplTest {
                 Assert.assertFalse(topology.contains(node2));
             } catch (Exception ignored) {
                 Assert.fail();
+            }
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class GetLeavesParametricTest {
+        @Parameterized.Parameters
+        public static Collection<Object[]> getParameters() {
+            ExpectedResult<Set<Node>> validInitial = new ExpectedResult<Set<Node>>(Collections.singleton(initialNode), null);
+            ExpectedResult<Set<Node>> empty = new ExpectedResult<Set<Node>>(Collections.emptySet(), null);
+            ExpectedResult<Set<Node>> exception = new ExpectedResult<Set<Node>>(null, Exception.class);
+            return Arrays.asList(
+                    new Object[][]{
+                            {null, exception},
+                            {"/rack-1", empty},
+                            {"/rack-0", validInitial}
+                    }
+            );
+        }
+
+        private NetworkTopologyImpl topology;
+        private static final Node initialNode = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
+        private final String scope;
+        private final ExpectedResult<Set<Node>> expected;
+
+        public GetLeavesParametricTest(String scope, ExpectedResult<Set<Node>> expected) {
+            this.scope = scope;
+            this.expected = expected;
+        }
+
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode);
+        }
+
+        @Test
+        public void getLeavesTest() {
+            try {
+                Set<Node> result = topology.getLeaves(scope);
+                // Collection equals, ignoring order
+                Assert.assertEquals(expected.getT().size(), result.size());
+                Assert.assertTrue(expected.getT().containsAll(result));
+                Assert.assertTrue(result.containsAll(expected.getT()));
+            } catch (Exception ignored) {
+                Assert.assertNotNull(expected.getException());
             }
         }
     }
