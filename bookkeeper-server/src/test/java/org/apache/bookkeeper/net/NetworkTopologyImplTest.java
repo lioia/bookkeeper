@@ -238,6 +238,7 @@ public class NetworkTopologyImplTest {
             initialNode = new BookieNode(BookieId.parse("initial-node"), "/rack-0");
             Node notPresent = new NodeBase("/not-present");
             Node innerNode = new NetworkTopologyImpl.InnerNode("/rack-0");
+            innerNode.setNetworkLocation("/"); // PIT improvements
             Node notPresetButInRack = new BookieNode(BookieId.parse("not-present"), "/rack-0");
             Node rack = new NodeBase("/rack-0");
             rack.setNetworkLocation("/");
@@ -280,6 +281,52 @@ public class NetworkTopologyImplTest {
                 Assert.assertFalse(topology.contains(node));
             } catch (Exception ignored) {
                 Assert.assertNotNull(expected);
+            }
+        }
+    }
+
+    public static class RemoveNonParametricTest {
+        private NetworkTopologyImpl topology;
+        private static final Node initialNode = new BookieNode(BookieId.parse("node1"), "/rack-0");
+        @Before
+        public void setup() {
+            topology = new NetworkTopologyImpl();
+            topology.add(initialNode);
+        }
+
+        @Test
+        public void remove() {
+            try {
+                topology.remove(initialNode);
+                Assert.assertFalse(topology.contains(initialNode));
+                // PIT improvements
+                Assert.assertEquals(0, topology.numOfRacks);
+            } catch (Exception ignored) {
+                Assert.fail();
+            }
+        }
+
+        // PIT improvements
+        @Test
+        public void deadlockTest() {
+            try {
+                Node node2 = new BookieNode(BookieId.parse("node-2"), "/rack-0");
+                topology.add(node2);
+                Thread thread = new Thread(() -> {
+                    try {
+                        topology.remove(node2);
+                        Thread.sleep(100);
+                    } catch (Exception e) {
+                        Assert.fail();
+                    }
+                });
+                thread.start();
+                topology.remove(initialNode);
+                thread.join();
+                Assert.assertFalse(topology.contains(initialNode));
+                Assert.assertFalse(topology.contains(node2));
+            } catch (Exception ignored) {
+                Assert.fail();
             }
         }
     }
