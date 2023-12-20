@@ -500,6 +500,22 @@ public class NetworkTopologyImplTest {
             ExpectedResult<Integer> zero = new ExpectedResult<>(0, null);
             ExpectedResult<Integer> two = new ExpectedResult<>(2, null);
             ExpectedResult<Integer> four = new ExpectedResult<>(4, null);
+
+            // Improvements
+            Node root = new NodeBase("/");
+            Node rack2 = new NodeBase("/rack-2");
+            rack2.setParent(root);
+            rack2.setLevel(1);
+            Node node1Rack2 = new NodeBase("/rack-2/node-1");
+            node1Rack2.setParent(rack2);
+            node1Rack2.setLevel(2);
+
+            Node rack3 = new NodeBase("/rack-3");
+            rack3.setParent(root);
+            rack3.setLevel(1);
+            Node node1Rack3 = new NodeBase("/rack-3/node-1");
+            node1Rack3.setParent(rack3);
+            node1Rack3.setLevel(3);
             return Arrays.asList(
                     new Object[][]{
 //                            {null, null, exception}, // Fail
@@ -508,6 +524,9 @@ public class NetworkTopologyImplTest {
                             {notPresent, notPresent, zero},
                             {initialNode1, initialNode2, two},
                             {initialNode2, initialNode3, four},
+                            // Improvements
+                            {node1Rack2, node1Rack3, max},
+                            {node1Rack3, node1Rack2, max},
                     }
             );
         }
