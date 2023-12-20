@@ -443,9 +443,8 @@ public class NetworkTopologyImplTest {
         public void countTest() {
             try {
                 Thread thread = new Thread(() -> {
-                    Field lockField = null;
                     try {
-                        lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
+                        Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
                         lockField.setAccessible(true);
                         ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
                         lock.writeLock().lock();
@@ -566,7 +565,22 @@ public class NetworkTopologyImplTest {
         @Test
         public void getDistanceTest() {
             try {
+                // PIT improvements
+                Thread thread = new Thread(() -> {
+                    try {
+                        Field lockField = NetworkTopologyImpl.class.getDeclaredField("netlock");
+                        lockField.setAccessible(true);
+                        ReadWriteLock lock = (ReadWriteLock) lockField.get(topology);
+                        lock.writeLock().lock();
+                        Thread.sleep(100);
+                        lock.writeLock().unlock();
+                    }catch(Exception ignored) {
+                        Assert.assertNotNull(expected.getException());
+                    }
+                });
+                thread.start();
                 Integer result = topology.getDistance(node1, node2);
+                thread.join();
                 Assert.assertNull(expected.getException());
                 Assert.assertEquals(expected.getT(), result);
             } catch (Exception ignored) {
