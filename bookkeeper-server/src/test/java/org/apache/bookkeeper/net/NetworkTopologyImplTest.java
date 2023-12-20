@@ -15,6 +15,8 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.locks.ReadWriteLock;
 
+import static org.mockito.Mockito.*;
+
 @RunWith(Enclosed.class)
 public class NetworkTopologyImplTest {
     @RunWith(Parameterized.class)
@@ -516,6 +518,9 @@ public class NetworkTopologyImplTest {
             Node node1Rack3 = new NodeBase("/rack-3/node-1");
             node1Rack3.setParent(rack3);
             node1Rack3.setLevel(3);
+
+            Node directNoParent = new NodeBase("/node-1");
+            directNoParent.setLevel(1);
             return Arrays.asList(
                     new Object[][]{
 //                            {null, null, exception}, // Fail
@@ -527,6 +532,11 @@ public class NetworkTopologyImplTest {
                             // Improvements
                             {node1Rack2, node1Rack3, max},
                             {node1Rack3, node1Rack2, max},
+                            // ba-dua improvements
+                            {initialNode1, root, four},
+                            {root, initialNode1, four},
+                            {directNoParent, root, max},
+                            {root, directNoParent, max},
                     }
             );
         }
