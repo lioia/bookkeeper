@@ -15,8 +15,9 @@
    See the License for the specific language governing permissions and
    limitations under the License.
 -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <artifactId>bookkeeper</artifactId>
@@ -299,7 +300,8 @@
                     <sourcepath>${src.dir}</sourcepath>
                     <!-- Avoid for missing javadoc comments to be marked as errors -->
                     <doclint>none</doclint>
-                    <subpackages>org.apache.bookkeeper.client:org.apache.bookkeeper.conf:org.apache.bookkeeper.feature
+                    <subpackages>
+                        org.apache.bookkeeper.client:org.apache.bookkeeper.conf:org.apache.bookkeeper.feature
                     </subpackages>
                     <groups>
                         <group>
@@ -359,7 +361,8 @@
                                 </goals>
                                 <configuration>
                                     <workingDirectory>${basedir}/src/test/resources</workingDirectory>
-                                    <executable>${basedir}/src/test/resources/generateKeysAndCerts.sh</executable>
+                                    <executable>
+                                        ${basedir}/src/test/resources/generateKeysAndCerts.sh</executable>
                                 </configuration>
                             </execution>
                         </executions>
@@ -490,9 +493,11 @@
                         <configuration>
                             <targetClasses>
                                 <param>org.apache.bookkeeper.client.DefaultBookieAddressResolver</param>
+                                <param>org.apache.bookkeeper.client.DefaultEnsemblePlacementPolicy</param>
                             </targetClasses>
                             <targetTests>
                                 <param>org.apache.bookkeeper.client.DefaultBookieAddressResolverTest</param>
+                                <param>org.apache.bookkeeper.client.DefaultEnsemblePlacementPolicyTest</param>
                             </targetTests>
                         </configuration>
                         <executions>
