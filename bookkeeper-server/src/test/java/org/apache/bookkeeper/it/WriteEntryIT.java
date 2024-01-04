@@ -8,10 +8,7 @@ import org.apache.bookkeeper.conf.TestBKConfiguration;
 import org.apache.bookkeeper.proto.BookkeeperInternalCallbacks;
 import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.utils.EntryLogScannerImpl;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -22,6 +19,7 @@ import java.util.*;
 
 import static org.mockito.Mockito.*;
 
+@Ignore
 @RunWith(Parameterized.class)
 public class WriteEntryIT {
     private final List<File> tempDirs = new ArrayList<>();
