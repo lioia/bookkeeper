@@ -492,9 +492,11 @@
                         <version>${pitest.version}</version>
                         <configuration>
                             <targetClasses>
+                                <param>org.apache.bookkeeper.client.DefaultBookieAddressResolver</param>
                                 <param>org.apache.bookkeeper.client.DefaultEnsemblePlacementPolicy</param>
                             </targetClasses>
                             <targetTests>
+                                <param>org.apache.bookkeeper.client.DefaultBookieAddressResolverTest</param>
                                 <param>org.apache.bookkeeper.client.DefaultEnsemblePlacementPolicyTest</param>
                             </targetTests>
                         </configuration>
