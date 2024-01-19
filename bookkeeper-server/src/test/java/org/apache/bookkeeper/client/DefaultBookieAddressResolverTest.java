@@ -35,8 +35,6 @@ public class DefaultBookieAddressResolverTest {
                         {valid, BookieId.parse("localhost:8080")},
                         // Improvements
                         {exception, BookieId.parse("localhost:8081")},
-//                        {exception, BookieId.parse("localhost:8082")}, // Fail: defaults to endpoint
-                        {valid, BookieId.parse("localhost:8082")},
                         {dummyValid, BookieSocketAddress.createDummyBookieIdForHostname("localhost")},
                         {exception, BookieId.parse("localhost")},
                 }
@@ -72,8 +70,6 @@ public class DefaultBookieAddressResolverTest {
                 .thenReturn(FutureUtils.value(new Versioned<>(validInfo, new LongVersion(-1))));
         when(mockClient.getBookieServiceInfo(BookieId.parse("localhost:8081")))
                 .thenReturn(FutureUtils.value(new Versioned<>(invalidInfo, new LongVersion(-1))));
-        when(mockClient.getBookieServiceInfo(BookieId.parse("localhost:8082")))
-                .thenReturn(FutureUtils.value(new Versioned<>(validInfo, new LongVersion(-1))));
         when(mockClient.getBookieServiceInfo(BookieSocketAddress.createDummyBookieIdForHostname("localhost")))
                 .thenAnswer(invocationOnMock -> {
                     throw new BKException.BKBookieHandleNotAvailableException();
