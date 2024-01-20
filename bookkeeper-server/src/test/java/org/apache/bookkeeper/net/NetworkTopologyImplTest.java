@@ -32,7 +32,6 @@ public class NetworkTopologyImplTest {
             ExpectedResult<Boolean> exception = new ExpectedResult<>(null, Exception.class);
             return Arrays.asList(
                     new Object[][]{
-//                            {null, exception}, // Fail: it early returns without throwing an exception
                             {null, absent},
                             {node1, present},
                             {node2, present},
