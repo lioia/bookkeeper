@@ -166,6 +166,9 @@ public class NetworkTopologyImplTest {
             Node anotherRack = new NodeBase("/rack-1/sub-rack-0/another-rack");
             anotherRack.setLevel(0);
             anotherRack.setParent(subRack1);
+            Node anotherRack2 = new NodeBase("/rack-1/sub-rack-0/another-rack2");
+            anotherRack2.setLevel(1);
+            anotherRack2.setParent(subRack1);
             ExpectedResult<Boolean> falseExp = new ExpectedResult<>(false, null);
             ExpectedResult<Boolean> trueExp = new ExpectedResult<>(true, null);
             return Arrays.asList(
@@ -178,6 +181,7 @@ public class NetworkTopologyImplTest {
                             {noParentNode, falseExp},
                             {noLevelNode, falseExp},
                             {anotherRack, falseExp},
+                            {anotherRack2, falseExp},
                     }
             );
         }
