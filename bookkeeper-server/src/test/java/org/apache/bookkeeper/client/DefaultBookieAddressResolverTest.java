@@ -35,7 +35,6 @@ public class DefaultBookieAddressResolverTest {
                         {valid, BookieId.parse("localhost:8080")},
                         // Improvements
                         {exception, BookieId.parse("localhost:8081")},
-//                        {exception, BookieId.parse("localhost:8082")}, // Fail: defaults to endpoint
                         {valid, BookieId.parse("localhost:8082")},
                         {dummyValid, BookieSocketAddress.createDummyBookieIdForHostname("localhost")},
                         {exception, BookieId.parse("localhost")},

@@ -32,7 +32,6 @@ public class NetworkTopologyImplTest {
             ExpectedResult<Boolean> exception = new ExpectedResult<>(null, Exception.class);
             return Arrays.asList(
                     new Object[][]{
-//                            {null, exception}, // Fail: it early returns without throwing an exception
                             {null, absent},
                             {node1, present},
                             {node2, present},
@@ -160,6 +159,16 @@ public class NetworkTopologyImplTest {
             noParentNode.setLevel(0);
             Node noLevelNode = new NodeBase("/fake-parent");
             noLevelNode.setParent(new NetworkTopologyImpl.InnerNode("/fake-parent"));
+            Node rack1 = new NetworkTopologyImpl.InnerNode("/rack-1");
+            Node subRack1 = new NetworkTopologyImpl.InnerNode("/rack-1/sub-rack-1");
+            subRack1.setLevel(1);
+            subRack1.setParent(rack1);
+            Node anotherRack = new NodeBase("/rack-1/sub-rack-0/another-rack");
+            anotherRack.setLevel(0);
+            anotherRack.setParent(subRack1);
+            Node anotherRack2 = new NodeBase("/rack-1/sub-rack-0/another-rack2");
+            anotherRack2.setLevel(1);
+            anotherRack2.setParent(subRack1);
             ExpectedResult<Boolean> falseExp = new ExpectedResult<>(false, null);
             ExpectedResult<Boolean> trueExp = new ExpectedResult<>(true, null);
             return Arrays.asList(
@@ -171,6 +180,8 @@ public class NetworkTopologyImplTest {
                             {deepNode, falseExp},
                             {noParentNode, falseExp},
                             {noLevelNode, falseExp},
+                            {anotherRack, falseExp},
+                            {anotherRack2, falseExp},
                     }
             );
         }
